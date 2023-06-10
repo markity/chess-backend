@@ -151,6 +151,28 @@ func NewTestTable2() *ChessTable {
 	return &table
 }
 
+func NewTestTable3() *ChessTable {
+	var table ChessTable
+
+	table.SetPosition(&ChessPiece{X: 'e', Y: 1, PieceType: ChessPieceTypeKing, GameSide: SideWhite, Moved: false})
+	table.SetPosition(&ChessPiece{X: 'h', Y: 1, PieceType: ChessPieceTypeRook, GameSide: SideWhite, Moved: false})
+
+	table.SetPosition(&ChessPiece{X: 'g', Y: 8, PieceType: ChessPieceTypeKing, GameSide: SideBlack, Moved: false})
+
+	return &table
+}
+
+func NewTestTable4() *ChessTable {
+	var table ChessTable
+
+	table.SetPosition(&ChessPiece{X: 'e', Y: 1, PieceType: ChessPieceTypeKing, GameSide: SideWhite, Moved: false})
+	table.SetPosition(&ChessPiece{X: 'a', Y: 1, PieceType: ChessPieceTypeRook, GameSide: SideWhite, Moved: false})
+
+	table.SetPosition(&ChessPiece{X: 'g', Y: 8, PieceType: ChessPieceTypeKing, GameSide: SideBlack, Moved: false})
+
+	return &table
+}
+
 func NewChessTable() *ChessTable {
 	var table ChessTable
 	table.SetPosition(&ChessPiece{X: 'a', Y: 1, PieceType: ChessPieceTypeRook, GameSide: SideWhite, Moved: false})
