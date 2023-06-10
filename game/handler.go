@@ -104,7 +104,10 @@ func (ch *ConnHandler) OnMessage(c *gev.Connection, ctx interface{}, data []byte
 					whiteConnContext = ConnMap[v.ID]
 				}
 
+				// 创建一个默认棋盘
 				table := chess.NewChessTable()
+
+				// 建立游戏上下文
 				gameContext := GameContext{
 					WhiteConnContext: whiteConnContext,
 					BlackConnContext: blackConnContext,
@@ -112,6 +115,7 @@ func (ch *ConnHandler) OnMessage(c *gev.Connection, ctx interface{}, data []byte
 					Table:            table,
 				}
 
+				// matching已经发送给v.ID的conn了, 重复发送可能造成协议错误
 				matchingPacket := packets.PacketServerMatching{}
 				matchingPacketWithHeader := packtool.DoPackWith4BytesHeader(matchingPacket.MustMarshalToBytes())
 				c.Send(matchingPacketWithHeader)
@@ -144,7 +148,7 @@ func (ch *ConnHandler) OnMessage(c *gev.Connection, ctx interface{}, data []byte
 			return nil
 		}
 
-		// 拿到一些信息
+		// 建立一些信息, 方便写代码
 		var gameContext = ConnMap[connID].Gcontext
 		var selfContext *ConnContext = ConnMap[connID]
 		var selfSide chess.Side
@@ -170,7 +174,7 @@ func (ch *ConnHandler) OnMessage(c *gev.Connection, ctx interface{}, data []byte
 		}
 
 		// 协议判断, 输入格式判断, 要求输入格式确实正确
-		// 注意x,y两两相等的情况也是不合法的
+		// 注意x,y两两相等的情况也是不合法的, 这点应该在客户端得到保障
 		if !chesstool.CheckChessPostsionVaild(packet.FromX, packet.FromY) ||
 			!chesstool.CheckChessPostsionVaild(packet.ToX, packet.ToY) ||
 			(packet.FromX == packet.ToX && packet.FromY == packet.ToY) {
@@ -180,6 +184,7 @@ func (ch *ConnHandler) OnMessage(c *gev.Connection, ctx interface{}, data []byte
 		}
 
 		result := chesstool.DoMove(gameContext.Table, selfSide, packet.FromX, packet.FromY, packet.ToX, packet.ToY)
+		// result.OK 移动是否有效
 		if !result.OK {
 			moveFailedPacket := packets.PacketServerMoveResp{
 				MoveRespType: packets.PacketTypeServerMoveRespTypeFailed,
@@ -203,7 +208,6 @@ func (ch *ConnHandler) OnMessage(c *gev.Connection, ctx interface{}, data []byte
 					MoveRespType: packets.PacketTypeServerMoveRespTypePawnUpgrade,
 					TableOnOK:    gameContext.Table,
 					KingThreat:   result.KingThreat,
-					PawnUpgrade:  true,
 				}
 				moveOKPacketBytesWithHeader := packtool.DoPackWith4BytesHeader(moveOKPacket.MustMarshalToBytes())
 				selfContext.Conn.Send(moveOKPacketBytesWithHeader)
@@ -229,7 +233,6 @@ func (ch *ConnHandler) OnMessage(c *gev.Connection, ctx interface{}, data []byte
 					MoveRespType: packets.PacketTypeServerMoveRespTypeOK,
 					TableOnOK:    gameContext.Table,
 					KingThreat:   result.KingThreat,
-					PawnUpgrade:  false,
 				}
 				moveOKPacketBytesWithHeader := packtool.DoPackWith4BytesHeader(moveOKPacket.MustMarshalToBytes())
 				selfContext.Conn.Send(moveOKPacketBytesWithHeader)
@@ -411,11 +414,13 @@ func (ch *ConnHandler) OnMessage(c *gev.Connection, ctx interface{}, data []byte
 
 		// 判断更多协议错误
 		if selfSide == chess.SideWhite && gameContext.Gstate != GameStateWaitingWhiteAcceptDraw {
+			println("粗我偶1")
 			ConnMap[connID].Conn.Close()
 			return nil
 		}
 		if selfSide == chess.SideBlack && gameContext.Gstate != GameStateWaitingBlackAcceptDraw {
 			ConnMap[connID].Conn.Close()
+			println("粗我偶2")
 			return nil
 		}
 
@@ -435,6 +440,11 @@ func (ch *ConnHandler) OnMessage(c *gev.Connection, ctx interface{}, data []byte
 			remoteContext.Gcontext = nil
 			return nil
 		} else {
+			if selfSide == chess.SideWhite {
+				gameContext.Gstate = GameStateWaitingWhitePut
+			} else {
+				gameContext.Gstate = GameStateWaitingBlackPut
+			}
 		}
 	case nil:
 		// 协议错误, 直接关闭

@@ -76,6 +76,26 @@ func (ct *ChessTable) GetIndex(x int, y int) *ChessPiece {
 	return ct[y*8+x]
 }
 
+func (ct *ChessTable) Copy() *ChessTable {
+	var table ChessTable
+	for i := 0; i < 64; i++ {
+		if ct[i] != nil {
+			newPiece := &ChessPiece{
+				PieceType:            ct[i].PieceType,
+				X:                    ct[i].X,
+				Y:                    ct[i].Y,
+				GameSide:             ct[i].GameSide,
+				Moved:                ct[i].Moved,
+				PawnMovedTwoLastTime: ct[i].Moved,
+			}
+
+			table[i] = newPiece
+		}
+	}
+
+	return &table
+}
+
 func NewChessTable() *ChessTable {
 	var table ChessTable
 	table.SetPosition(&ChessPiece{X: 'a', Y: 1, PieceType: ChessPieceTypeRook, GameSide: SideWhite, Moved: false})
