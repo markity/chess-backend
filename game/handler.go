@@ -313,11 +313,9 @@ func (ch *ConnHandler) OnMessage(c *gev.Connection, ctx interface{}, data []byte
 			return nil
 		}
 
-		println("来了")
 		// 协议判断, 检查升变的棋子是否合法, 只允许以下4种棋子
 		if packet.ChessPieceType != chess.ChessPieceTypeRook && packet.ChessPieceType != chess.ChessPieceTypeBishop &&
 			packet.ChessPieceType != chess.ChessPieceTypeKnight && packet.ChessPieceType != chess.ChessPieceTypeQueen {
-			println("x了")
 			selfContext.Conn.Close()
 			return nil
 		}

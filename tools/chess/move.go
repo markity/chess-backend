@@ -48,7 +48,6 @@ func hasChessBetweenTwoPointsInLine(table *chess.ChessTable, aX rune, aY int, bX
 
 		for y0 := yMin + 1; y0 < yMax; y0++ {
 			if table[y0*8+x1] != nil {
-				println(2)
 				return true
 			}
 		}
@@ -64,7 +63,6 @@ func hasChessBetweenTwoPointsInLine(table *chess.ChessTable, aX rune, aY int, bX
 		}
 
 		for x0 := xMin + 1; x0 < xMax; x0++ {
-			println(1)
 			if table[y1*8+x0] != nil {
 				return true
 			}
@@ -277,7 +275,7 @@ func checkIndexThreat(table *chess.ChessTable, side chess.Side, x int, y int) bo
 				break
 			}
 
-			if p.GameSide == remoteSide && (p.PieceType == chess.ChessPieceTypeBishop ||
+			if p.GameSide == remoteSide && (p.PieceType == chess.ChessPieceTypeRook ||
 				p.PieceType == chess.ChessPieceTypeQueen) {
 				return true
 			}
@@ -291,7 +289,7 @@ func checkIndexThreat(table *chess.ChessTable, side chess.Side, x int, y int) bo
 				break
 			}
 
-			if p.GameSide == remoteSide && (p.PieceType == chess.ChessPieceTypeBishop ||
+			if p.GameSide == remoteSide && (p.PieceType == chess.ChessPieceTypeRook ||
 				p.PieceType == chess.ChessPieceTypeQueen) {
 				return true
 			}
@@ -305,7 +303,7 @@ func checkIndexThreat(table *chess.ChessTable, side chess.Side, x int, y int) bo
 				break
 			}
 
-			if p.GameSide == remoteSide && (p.PieceType == chess.ChessPieceTypeBishop ||
+			if p.GameSide == remoteSide && (p.PieceType == chess.ChessPieceTypeRook ||
 				p.PieceType == chess.ChessPieceTypeQueen) {
 				return true
 			}
@@ -466,8 +464,6 @@ func findAllJustMoved2Pawn(table *chess.ChessTable) []*chess.ChessPiece {
 
 // 输入规则: 不同且合法的坐标
 func DoMove(table *chess.ChessTable, side chess.Side, fromX rune, fromY int, toX rune, toY int) (result MoveResult) {
-	println("了")
-
 	// 一些要用到的基本数据
 	fromx, fromy := chess.MustPositionToIndex(fromX, fromY)
 	tox, toy := chess.MustPositionToIndex(toX, toY)
@@ -505,19 +501,16 @@ func DoMove(table *chess.ChessTable, side chess.Side, fromX rune, fromY int, toX
 	// 判断棋子的类型, 4种基本棋子做一套逻辑
 	if fromPiece.PieceType != chess.ChessPieceTypeKing &&
 		fromPiece.PieceType != chess.ChessPieceTypePawn {
-		println("进入了")
 		switch fromPiece.PieceType {
 		case chess.ChessPieceTypeRook:
 			// 不在同一条直线
 			if !isOnSameLine(fromX, fromY, toX, toY) {
-				println("123")
 				result.OK = false
 				return
 			}
 
 			// 中间有别的棋子
 			if hasChessBetweenTwoPointsInLine(table, fromX, fromY, toX, toY) {
-				println("456")
 				result.OK = false
 				return
 			}
@@ -538,14 +531,12 @@ func DoMove(table *chess.ChessTable, side chess.Side, fromX rune, fromY int, toX
 		case chess.ChessPieceTypeBishop:
 			// 非倾斜
 			if !isTwoIndexIncline(fromx, fromy, tox, toy) {
-				println("ppp")
 				result.OK = false
 				return
 			}
 
 			// 有格挡
 			if hasChessBetweenTwoInclinedPoints(table, fromx, fromy, tox, toy) {
-				println("qqq")
 				result.OK = false
 				return
 			}
@@ -558,7 +549,6 @@ func DoMove(table *chess.ChessTable, side chess.Side, fromX rune, fromY int, toX
 		case chess.ChessPieceTypeQueen:
 			// 不合法的位移
 			if !isOnSameLine(fromX, fromY, toX, toY) && !isTwoIndexIncline(fromx, fromy, tox, toy) {
-				println(11111)
 				result.OK = false
 				return
 			}
@@ -566,14 +556,12 @@ func DoMove(table *chess.ChessTable, side chess.Side, fromX rune, fromY int, toX
 			// 有格挡
 			if isOnSameLine(fromX, fromY, toX, toY) && hasChessBetweenTwoPointsInLine(table, fromX, fromY, toX, toY) {
 				result.OK = false
-				println(22222)
 				return
 			}
 
 			// 有格挡
 			if isTwoIndexIncline(fromx, fromy, tox, toy) && hasChessBetweenTwoInclinedPoints(table, fromx, fromy, toy, toy) {
 				result.OK = false
-				println(33333)
 				return
 			}
 		}
@@ -586,9 +574,9 @@ func DoMove(table *chess.ChessTable, side chess.Side, fromX rune, fromY int, toX
 		testFromPiece.Moved = true
 		testFromPiece.X = toX
 		testFromPiece.Y = toY
-		testTable.SetPosition(fromPiece)
+		testTable.SetPosition(testFromPiece)
 
-		selfKing := findKing(table, side)
+		selfKing := findKing(testTable, side)
 		if checkPositionThreat(testTable, side, selfKing.X, selfKing.Y) {
 			result.OK = false
 			return
@@ -995,7 +983,6 @@ func DoMove(table *chess.ChessTable, side chess.Side, fromX rune, fromY int, toX
 
 	// 处理兵升变
 	result.PawnUpgrade = pawnUpgrade
-	println(result.PawnUpgrade)
 
 	// 找到对方的king
 	remoteKing := findKing(table, remoteSide)
