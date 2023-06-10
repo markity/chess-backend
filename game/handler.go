@@ -111,27 +111,22 @@ func (ch *ConnHandler) OnMessage(c *gev.Connection, ctx interface{}, data []byte
 					Gstate:           GameStateWaitingWhitePut,
 					Table:            table,
 				}
-				gameContext.WhiteConnContext = whiteConnContext
-				gameContext.BlackConnContext = blackConnContext
 
 				matchingPacket := packets.PacketServerMatching{}
 				matchingPacketWithHeader := packtool.DoPackWith4BytesHeader(matchingPacket.MustMarshalToBytes())
+				c.Send(matchingPacketWithHeader)
 
 				packetForBlack := packets.PacketServerMatchedOK{Side: chess.SideBlack, Table: table}
 				packetForBlackBytesWithHeader := packtool.DoPackWith4BytesHeader(packetForBlack.MustMarshalToBytes())
-				v.ConnState = ConnStateGaming
-				v.Gcontext = &gameContext
-
-				v.Conn.Send(matchingPacketWithHeader)
-				v.Conn.Send(packetForBlackBytesWithHeader)
+				blackConnContext.ConnState = ConnStateGaming
+				blackConnContext.Gcontext = &gameContext
+				blackConnContext.Conn.Send(packetForBlackBytesWithHeader)
 
 				packetForWhite := packets.PacketServerMatchedOK{Side: chess.SideWhite, Table: table}
 				packetForWhiteBytesWithHeader := packtool.DoPackWith4BytesHeader(packetForWhite.MustMarshalToBytes())
-				ConnMap[connID].ConnState = ConnStateGaming
-				ConnMap[connID].Gcontext = &gameContext
-
-				ConnMap[connID].Conn.Send(matchingPacketWithHeader)
-				ConnMap[connID].Conn.Send(packetForWhiteBytesWithHeader)
+				whiteConnContext.ConnState = ConnStateGaming
+				whiteConnContext.Gcontext = &gameContext
+				whiteConnContext.Conn.Send(packetForWhiteBytesWithHeader)
 				return nil
 			}
 		}
@@ -179,6 +174,7 @@ func (ch *ConnHandler) OnMessage(c *gev.Connection, ctx interface{}, data []byte
 		if !chesstool.CheckChessPostsionVaild(packet.FromX, packet.FromY) ||
 			!chesstool.CheckChessPostsionVaild(packet.ToX, packet.ToY) ||
 			(packet.FromX == packet.ToX && packet.FromY == packet.ToY) {
+			println("not valid")
 			ConnMap[connID].Conn.Close()
 			return nil
 		}
@@ -193,6 +189,7 @@ func (ch *ConnHandler) OnMessage(c *gev.Connection, ctx interface{}, data []byte
 			selfContext.Conn.Send(moveFailedPacketBytesWithHeader)
 			return nil
 		}
+		println("game over", result.GameOver)
 
 		if !result.GameOver {
 			// 处理兵的升变问题
@@ -215,9 +212,11 @@ func (ch *ConnHandler) OnMessage(c *gev.Connection, ctx interface{}, data []byte
 					Table:             gameContext.Table,
 					RemotePawnUpgrade: true,
 					KingThreat:        moveOKPacket.KingThreat,
+					// 等升变完了再处理议和问题
 					RemoteRequestDraw: false,
 				}
-				remoteContext.Conn.Send(remoteMovePacket)
+				remoteMovePacketBytesWithHeader := packtool.DoPackWith4BytesHeader(remoteMovePacket.MustMarshalToBytes())
+				remoteContext.Conn.Send(remoteMovePacketBytesWithHeader)
 
 				if selfSide == chess.SideWhite {
 					gameContext.Gstate = GameStateWaitingWhiteUpgrade
@@ -241,13 +240,20 @@ func (ch *ConnHandler) OnMessage(c *gev.Connection, ctx interface{}, data []byte
 					KingThreat:        result.KingThreat,
 					RemoteRequestDraw: packet.DoDraw,
 				}
-				remoteContext.Conn.Send(remoteMovePacket)
+				remoteMovePacketBytesWithHeader := packtool.DoPackWith4BytesHeader(remoteMovePacket.MustMarshalToBytes())
+				remoteContext.Conn.Send(remoteMovePacketBytesWithHeader)
 
 				if packet.DoDraw {
 					if selfSide == chess.SideWhite {
 						gameContext.Gstate = GameStateWaitingBlackAcceptDraw
 					} else {
 						gameContext.Gstate = GameStateWaitingWhiteAcceptDraw
+					}
+				} else {
+					if selfSide == chess.SideWhite {
+						gameContext.Gstate = GameStateWaitingBlackPut
+					} else {
+						gameContext.Gstate = GameStateWaitingWhitePut
 					}
 				}
 				return nil

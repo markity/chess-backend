@@ -5,7 +5,7 @@ func CheckChessPostsionVaild(x rune, y int) bool {
 		return false
 	}
 
-	if y < 1 || x > 8 {
+	if y < 1 || y > 8 {
 		return false
 	}
 
