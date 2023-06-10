@@ -178,7 +178,6 @@ func (ch *ConnHandler) OnMessage(c *gev.Connection, ctx interface{}, data []byte
 		if !chesstool.CheckChessPostsionVaild(packet.FromX, packet.FromY) ||
 			!chesstool.CheckChessPostsionVaild(packet.ToX, packet.ToY) ||
 			(packet.FromX == packet.ToX && packet.FromY == packet.ToY) {
-			println("not valid")
 			ConnMap[connID].Conn.Close()
 			return nil
 		}
@@ -194,7 +193,6 @@ func (ch *ConnHandler) OnMessage(c *gev.Connection, ctx interface{}, data []byte
 			selfContext.Conn.Send(moveFailedPacketBytesWithHeader)
 			return nil
 		}
-		println("game over", result.GameOver)
 
 		if !result.GameOver {
 			// 处理兵的升变问题
@@ -361,6 +359,7 @@ func (ch *ConnHandler) OnMessage(c *gev.Connection, ctx interface{}, data []byte
 		var gameContext = ConnMap[connID].Gcontext
 		var selfContext *ConnContext = ConnMap[connID]
 		var selfSide chess.Side
+		othertool.Ignore(selfSide)
 		var remoteContext *ConnContext
 		var remoteSide chess.Side
 		othertool.Ignore(remoteContext)
@@ -377,7 +376,7 @@ func (ch *ConnHandler) OnMessage(c *gev.Connection, ctx interface{}, data []byte
 
 		gameOverPacket := packets.PacketServerGameOver{
 			Table:       gameContext.Table,
-			WinnerSide:  selfSide,
+			WinnerSide:  remoteSide,
 			IsSurrender: true,
 		}
 		gameOverPacketBytesWithHeader := packtool.DoPackWith4BytesHeader(gameOverPacket.MustMarshalToBytes())
@@ -414,13 +413,11 @@ func (ch *ConnHandler) OnMessage(c *gev.Connection, ctx interface{}, data []byte
 
 		// 判断更多协议错误
 		if selfSide == chess.SideWhite && gameContext.Gstate != GameStateWaitingWhiteAcceptDraw {
-			println("粗我偶1")
 			ConnMap[connID].Conn.Close()
 			return nil
 		}
 		if selfSide == chess.SideBlack && gameContext.Gstate != GameStateWaitingBlackAcceptDraw {
 			ConnMap[connID].Conn.Close()
-			println("粗我偶2")
 			return nil
 		}
 

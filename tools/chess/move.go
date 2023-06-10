@@ -2,7 +2,6 @@ package chess
 
 import (
 	"chess-backend/comm/chess"
-	"fmt"
 )
 
 type MoveResult struct {
@@ -104,7 +103,6 @@ func checkIndexThreat(table *chess.ChessTable, side chess.Side, x int, y int) bo
 		if x0, y0 := x+1, y+1; CheckChessIndexValid(x0, y0) {
 			p := table.GetIndex(x0, y0)
 			if p != nil && p.PieceType == chess.ChessPieceTypePawn && p.GameSide == remoteSide {
-				println("111")
 				return true
 			}
 		}
@@ -112,7 +110,6 @@ func checkIndexThreat(table *chess.ChessTable, side chess.Side, x int, y int) bo
 		if x0, y0 := x-1, y+1; CheckChessIndexValid(x0, y0) {
 			p := table.GetIndex(x0, y0)
 			if p != nil && p.PieceType == chess.ChessPieceTypePawn && p.GameSide == remoteSide {
-				println("222")
 				return true
 			}
 		}
@@ -120,7 +117,6 @@ func checkIndexThreat(table *chess.ChessTable, side chess.Side, x int, y int) bo
 		if x0, y0 := x+1, y-1; CheckChessIndexValid(x0, y0) {
 			p := table.GetIndex(x0, y0)
 			if p != nil && p.PieceType == chess.ChessPieceTypePawn && p.GameSide == remoteSide {
-				println("333")
 				return true
 			}
 		}
@@ -128,7 +124,6 @@ func checkIndexThreat(table *chess.ChessTable, side chess.Side, x int, y int) bo
 		if x0, y0 := x-1, y-1; CheckChessIndexValid(x0, y0) {
 			p := table.GetIndex(x0, y0)
 			if p != nil && p.PieceType == chess.ChessPieceTypePawn && p.GameSide == remoteSide {
-				println("444")
 				return true
 			}
 		}
@@ -137,7 +132,6 @@ func checkIndexThreat(table *chess.ChessTable, side chess.Side, x int, y int) bo
 	// 2. 检查bishop和queen threat, 遍历所有的斜对角位置
 	// 右上角
 	for x0, y0 := x+1, y+1; CheckChessIndexValid(x0, y0); x0, y0 = x0+1, y0+1 {
-		println("便利", x0, y0)
 		p := table.GetIndex(x0, y0)
 		if p != nil {
 			// 被自家棋子挡住了, 这是安全的
@@ -147,7 +141,6 @@ func checkIndexThreat(table *chess.ChessTable, side chess.Side, x int, y int) bo
 
 			if p.GameSide == remoteSide && (p.PieceType == chess.ChessPieceTypeBishop ||
 				p.PieceType == chess.ChessPieceTypeQueen) {
-				println("555")
 				return true
 			}
 		}
@@ -163,7 +156,6 @@ func checkIndexThreat(table *chess.ChessTable, side chess.Side, x int, y int) bo
 
 			if p.GameSide == remoteSide && (p.PieceType == chess.ChessPieceTypeBishop ||
 				p.PieceType == chess.ChessPieceTypeQueen) {
-				println("666")
 				return true
 			}
 		}
@@ -179,7 +171,6 @@ func checkIndexThreat(table *chess.ChessTable, side chess.Side, x int, y int) bo
 
 			if p.GameSide == remoteSide && (p.PieceType == chess.ChessPieceTypeBishop ||
 				p.PieceType == chess.ChessPieceTypeQueen) {
-				println("777")
 				return true
 			}
 		}
@@ -195,7 +186,6 @@ func checkIndexThreat(table *chess.ChessTable, side chess.Side, x int, y int) bo
 
 			if p.GameSide == remoteSide && (p.PieceType == chess.ChessPieceTypeBishop ||
 				p.PieceType == chess.ChessPieceTypeQueen) {
-				println("888")
 				return true
 			}
 		}
@@ -545,15 +535,12 @@ func DoMove(table *chess.ChessTable, side chess.Side, fromX rune, fromY int, toX
 
 		// 找到对方的king
 		remoteKing := findKing(table, remoteSide)
-		fmt.Println("对方的king", remoteKing.X, remoteKing.Y)
 
 		// 是否将军
 		kingThreat := checkPositionThreat(table, remoteSide, remoteKing.X, remoteKing.Y)
-		println("king threat", kingThreat)
 
 		// 王的8个单元格是否都受威胁
 		kingAroundAllThreat := checkAround8Threat(table, remoteSide, remoteKing.X, remoteKing.Y)
-		println("king around 8 threat", kingAroundAllThreat)
 
 		// 赢
 		if kingThreat && kingAroundAllThreat {
@@ -621,12 +608,12 @@ func DoMove(table *chess.ChessTable, side chess.Side, fromX rune, fromY int, toX
 		} else {
 			// 想要王车易位, 上面已经判断了from, to的坐标了
 			if side == chess.SideWhite {
-				// 长
+				// 短
 				if tox == 'h' {
 					rookPiece := table.GetPosition('h', 1)
 
 					// 挡住
-					if hasChessBetweenTwoPointsInLine(table, 'd', 1, 'h', 1) {
+					if hasChessBetweenTwoPointsInLine(table, 'e', 1, 'h', 1) {
 						result.OK = false
 						return
 					}
@@ -644,19 +631,19 @@ func DoMove(table *chess.ChessTable, side chess.Side, fromX rune, fromY int, toX
 					}
 
 					// 检查路过的威胁
-					if checkIndexThreat(table, side, 'f', 1) || checkIndexThreat(table, side, 'e', 1) {
+					if checkIndexThreat(table, side, 'f', 1) || checkIndexThreat(table, side, 'g', 1) {
 						result.OK = false
 						return
 					}
 
 					// ok, 可以易位
-					table.ClearPosition('d', 1)
+					table.ClearPosition('e', 1)
 					table.ClearPosition('h', 1)
-					fromPiece.X = 'f'
+					fromPiece.X = 'g'
 					fromPiece.Y = 1
 					fromPiece.Moved = true
 					table.SetPosition(fromPiece)
-					rookPiece.X = 'e'
+					rookPiece.X = 'f'
 					rookPiece.Y = 1
 					fromPiece.Moved = true
 					table.SetPosition(rookPiece)
@@ -665,7 +652,7 @@ func DoMove(table *chess.ChessTable, side chess.Side, fromX rune, fromY int, toX
 
 					// 短
 					// 挡住
-					if hasChessBetweenTwoPointsInLine(table, 'd', 1, 'a', 1) {
+					if hasChessBetweenTwoPointsInLine(table, 'e', 1, 'a', 1) {
 						result.OK = false
 						return
 					}
@@ -683,13 +670,13 @@ func DoMove(table *chess.ChessTable, side chess.Side, fromX rune, fromY int, toX
 					}
 
 					// ok, 可以易位
-					table.ClearPosition('d', 1)
+					table.ClearPosition('e', 1)
 					table.ClearPosition('a', 1)
-					fromPiece.X = 'b'
+					fromPiece.X = 'c'
 					fromPiece.Y = 1
 					fromPiece.Moved = true
 					table.SetPosition(fromPiece)
-					rookPiece.X = 'c'
+					rookPiece.X = 'd'
 					rookPiece.Y = 1
 					fromPiece.Moved = true
 					table.SetPosition(rookPiece)
@@ -700,7 +687,7 @@ func DoMove(table *chess.ChessTable, side chess.Side, fromX rune, fromY int, toX
 				if tox == 'h' {
 					rookPiece := table.GetPosition('h', 8)
 					// 挡住
-					if hasChessBetweenTwoPointsInLine(table, 'd', 8, 'h', 8) {
+					if hasChessBetweenTwoPointsInLine(table, 'e', 8, 'h', 8) {
 						result.OK = false
 						return
 					}
@@ -718,22 +705,22 @@ func DoMove(table *chess.ChessTable, side chess.Side, fromX rune, fromY int, toX
 					}
 
 					// ok, 可以易位
-					table.ClearPosition('d', 8)
+					table.ClearPosition('e', 8)
 					table.ClearPosition('h', 8)
-					fromPiece.X = 'f'
+					fromPiece.X = 'g'
 					fromPiece.Y = 8
 					fromPiece.Moved = true
 					table.SetPosition(fromPiece)
-					rookPiece.X = 'e'
+					rookPiece.X = 'f'
 					rookPiece.Y = 8
 					fromPiece.Moved = true
 					table.SetPosition(rookPiece)
+					// 长
 				} else {
 					rookPiece := table.GetPosition('h', 8)
 
-					// 短
 					// 挡住
-					if hasChessBetweenTwoPointsInLine(table, 'd', 8, 'a', 8) {
+					if hasChessBetweenTwoPointsInLine(table, 'e', 8, 'a', 8) {
 						result.OK = false
 						return
 					}
@@ -751,13 +738,13 @@ func DoMove(table *chess.ChessTable, side chess.Side, fromX rune, fromY int, toX
 					}
 
 					// ok, 可以易位
-					table.ClearPosition('d', 8)
+					table.ClearPosition('e', 8)
 					table.ClearPosition('a', 8)
-					fromPiece.X = 'b'
+					fromPiece.X = 'c'
 					fromPiece.Y = 8
 					fromPiece.Moved = true
 					table.SetPosition(fromPiece)
-					rookPiece.X = 'c'
+					rookPiece.X = 'd'
 					rookPiece.Y = 8
 					fromPiece.Moved = true
 					table.SetPosition(rookPiece)
@@ -826,7 +813,6 @@ func DoMove(table *chess.ChessTable, side chess.Side, fromX rune, fromY int, toX
 						}
 						// 这里要吃掉过路兵
 						table.ClearPosition(justMoveTwoPawn.X, justMoveTwoPawn.Y)
-						fmt.Println("吃掉", justMoveTwoPawnX, justMoveTwoPawnY)
 					}
 				}
 				// 1 diffY == 1 && diffX == 0
@@ -930,15 +916,12 @@ func DoMove(table *chess.ChessTable, side chess.Side, fromX rune, fromY int, toX
 
 	// 找到对方的king
 	remoteKing := findKing(table, remoteSide)
-	fmt.Println("对方的king", remoteKing.X, remoteKing.Y)
 
 	// 是否将军
 	kingThreat := checkPositionThreat(table, remoteSide, remoteKing.X, remoteKing.Y)
-	println("king threat", kingThreat)
 
 	// 王的8个单元格是否都受威胁
 	kingAroundAllThreat := checkAround8Threat(table, remoteSide, remoteKing.X, remoteKing.Y)
-	println("king around 8 threat", kingAroundAllThreat)
 
 	// 赢
 	if kingThreat && kingAroundAllThreat {
