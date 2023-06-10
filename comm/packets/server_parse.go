@@ -29,6 +29,14 @@ func ServerParse(bs []byte) interface{} {
 		p := PacketClientSendPawnUpgrade{}
 		json.Unmarshal(bs, &p)
 		return &p
+	case PacketTypeClientWheatherAcceptDraw:
+		p := PacketClientSendPawnUpgrade{}
+		json.Unmarshal(bs, &p)
+		return &p
+	case PacketTypeClientDoSurrender:
+		p := PacketClientSendPawnUpgrade{}
+		json.Unmarshal(bs, &p)
+		return &p
 	default:
 		return nil
 	}

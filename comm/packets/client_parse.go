@@ -42,6 +42,10 @@ func ClientParse(bs []byte) interface{} {
 		p := PacketServerNotifyRemoteMove{}
 		json.Unmarshal(bs, &p)
 		return &p
+	case PacketTypeServerRemoteUpgradeOK:
+		p := PacketServerRemoteUpgradeOK{}
+		json.Unmarshal(bs, &p)
+		return &p
 	default:
 		return nil
 	}

@@ -22,6 +22,7 @@ type Side int
 const (
 	SideWhite Side = iota
 	SideBlack
+	// 用来指示平局
 	SideBoth
 )
 
@@ -42,6 +43,7 @@ type ChessPiece struct {
 	PawnMovedTwoLastTime bool
 }
 
+// 棋盘类型
 type ChessTable [64]*ChessPiece
 
 // 确保传入的是有效的
@@ -54,6 +56,12 @@ func (ct *ChessTable) SetPosition(newPiece *ChessPiece) *ChessPiece {
 
 func (ct *ChessTable) ClearPosition(X rune, Y int) *ChessPiece {
 	x, y := MustPositionToIndex(X, Y)
+	oldPiece := ct[y*8+x]
+	ct[y*8+x] = nil
+	return oldPiece
+}
+
+func (ct *ChessTable) ClearIndex(x int, y int) *ChessPiece {
 	oldPiece := ct[y*8+x]
 	ct[y*8+x] = nil
 	return oldPiece

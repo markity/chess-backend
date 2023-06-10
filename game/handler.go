@@ -30,6 +30,9 @@ const (
 	GameStateWaitingBlackUpgrade
 	// 等待白方的兵升迁
 	GameStateWaitingWhiteUpgrade
+	// 等待响应, 是否接受和棋
+	GameStateWaitingBlackAcceptDraw
+	GameStateWaitingWhiteAcceptDraw
 )
 
 type ConnHandler struct{}
@@ -49,6 +52,7 @@ func (ch *ConnHandler) OnClose(c *gev.Connection) {
 	connID := c.Context().(int)
 	ConnMapLock.Lock()
 	if ConnMap[connID].ConnState == ConnStateGaming {
+		// 需要告知游戏对端, 对手连接丢失
 		var remoteConnContext *ConnContext
 		if ConnMap[connID].Gcontext.BlackConnContext.ID == connID {
 			remoteConnContext = ConnMap[connID].Gcontext.WhiteConnContext
@@ -65,7 +69,7 @@ func (ch *ConnHandler) OnClose(c *gev.Connection) {
 }
 
 func (ch *ConnHandler) OnMessage(c *gev.Connection, ctx interface{}, data []byte) interface{} {
-	// 没有收到消息
+	// 没有收到消息, 继续等待消息传完
 	if data == nil {
 		return nil
 	}
@@ -78,6 +82,7 @@ func (ch *ConnHandler) OnMessage(c *gev.Connection, ctx interface{}, data []byte
 	defer ConnMapLock.Unlock()
 	switch packet := packIface.(type) {
 	case *packets.PacketHeartbeat:
+		// 清0丢失心跳计数
 		ConnMap[connID].LoseHertbeatCount = 0
 	case *packets.PacketClientStartMatch:
 		// 协议错误
@@ -85,7 +90,6 @@ func (ch *ConnHandler) OnMessage(c *gev.Connection, ctx interface{}, data []byte
 			c.Close()
 		}
 
-		matched := false
 		// 找一个正在match的连接
 		for _, v := range ConnMap {
 			if v.ID != connID && v.ConnState == ConnStateMatching {
@@ -128,18 +132,16 @@ func (ch *ConnHandler) OnMessage(c *gev.Connection, ctx interface{}, data []byte
 
 				ConnMap[connID].Conn.Send(matchingPacketWithHeader)
 				ConnMap[connID].Conn.Send(packetForWhiteBytesWithHeader)
-				matched = true
-				break
+				return nil
 			}
 		}
 
 		// 找不到一个匹配的, 那么标记为正在匹配
-		if !matched {
-			ConnMap[connID].ConnState = ConnStateMatching
-			retPacket := packets.PacketServerMatching{}
-			retPacketBytesWithHeader := packtool.DoPackWith4BytesHeader(retPacket.MustMarshalToBytes())
-			ConnMap[connID].Conn.Send(retPacketBytesWithHeader)
-		}
+		ConnMap[connID].ConnState = ConnStateMatching
+		retPacket := packets.PacketServerMatching{}
+		retPacketBytesWithHeader := packtool.DoPackWith4BytesHeader(retPacket.MustMarshalToBytes())
+		ConnMap[connID].Conn.Send(retPacketBytesWithHeader)
+		return nil
 	case *packets.PacketClientMove:
 		// 协议判断
 		if ConnMap[connID].ConnState != ConnStateGaming {
@@ -195,10 +197,16 @@ func (ch *ConnHandler) OnMessage(c *gev.Connection, ctx interface{}, data []byte
 		if !result.GameOver {
 			// 处理兵的升变问题
 			if result.PawnUpgrade {
+				// 标记升变后请求和棋
+				if packet.DoDraw {
+					gameContext.DrawAfterUpgrade = true
+				}
+
 				moveOKPacket := packets.PacketServerMoveResp{
 					MoveRespType: packets.PacketTypeServerMoveRespTypePawnUpgrade,
 					TableOnOK:    gameContext.Table,
 					KingThreat:   result.KingThreat,
+					PawnUpgrade:  true,
 				}
 				moveOKPacketBytesWithHeader := packtool.DoPackWith4BytesHeader(moveOKPacket.MustMarshalToBytes())
 				selfContext.Conn.Send(moveOKPacketBytesWithHeader)
@@ -206,12 +214,23 @@ func (ch *ConnHandler) OnMessage(c *gev.Connection, ctx interface{}, data []byte
 				remoteMovePacket := packets.PacketServerNotifyRemoteMove{
 					Table:             gameContext.Table,
 					RemotePawnUpgrade: true,
+					KingThreat:        moveOKPacket.KingThreat,
+					RemoteRequestDraw: false,
 				}
 				remoteContext.Conn.Send(remoteMovePacket)
+
+				if selfSide == chess.SideWhite {
+					gameContext.Gstate = GameStateWaitingWhiteUpgrade
+				} else {
+					gameContext.Gstate = GameStateWaitingBlackUpgrade
+				}
+				return nil
 			} else {
 				moveOKPacket := packets.PacketServerMoveResp{
 					MoveRespType: packets.PacketTypeServerMoveRespTypeOK,
 					TableOnOK:    gameContext.Table,
+					KingThreat:   result.KingThreat,
+					PawnUpgrade:  false,
 				}
 				moveOKPacketBytesWithHeader := packtool.DoPackWith4BytesHeader(moveOKPacket.MustMarshalToBytes())
 				selfContext.Conn.Send(moveOKPacketBytesWithHeader)
@@ -220,16 +239,27 @@ func (ch *ConnHandler) OnMessage(c *gev.Connection, ctx interface{}, data []byte
 					Table:             gameContext.Table,
 					RemotePawnUpgrade: false,
 					KingThreat:        result.KingThreat,
+					RemoteRequestDraw: packet.DoDraw,
 				}
 				remoteContext.Conn.Send(remoteMovePacket)
+
+				if packet.DoDraw {
+					if selfSide == chess.SideWhite {
+						gameContext.Gstate = GameStateWaitingBlackAcceptDraw
+					} else {
+						gameContext.Gstate = GameStateWaitingWhiteAcceptDraw
+					}
+				}
+				return nil
 			}
-			return nil
 		}
 
 		// game over, 发送消息, 清空资源
 		gameOverPacket := packets.PacketServerGameOver{
-			Table:      gameContext.Table,
-			WinnerSide: result.GameWinner,
+			Table:       gameContext.Table,
+			WinnerSide:  result.GameWinner,
+			IsSurrender: false,
+			IsDraw:      false,
 		}
 		gameOverPacketBytesWithHeader := packtool.DoPackWith4BytesHeader(gameOverPacket.MustMarshalToBytes())
 		selfContext.Conn.Send(gameOverPacketBytesWithHeader)
@@ -242,7 +272,164 @@ func (ch *ConnHandler) OnMessage(c *gev.Connection, ctx interface{}, data []byte
 
 		return nil
 	case *packets.PacketClientSendPawnUpgrade:
-		othertool.Ignore(nil)
+		// 协议判断
+		if ConnMap[connID].ConnState != ConnStateGaming {
+			ConnMap[connID].Conn.Close()
+			return nil
+		}
+
+		// 拿到一些信息
+		var gameContext = ConnMap[connID].Gcontext
+		var selfContext *ConnContext = ConnMap[connID]
+		var selfSide chess.Side
+		var remoteContext *ConnContext
+		var remoteSide chess.Side
+		othertool.Ignore(remoteContext)
+		othertool.Ignore(remoteSide)
+		if gameContext.BlackConnContext == selfContext {
+			remoteContext = gameContext.WhiteConnContext
+			selfSide = chess.SideBlack
+			remoteSide = chess.SideWhite
+		} else {
+			remoteContext = gameContext.BlackConnContext
+			selfSide = chess.SideWhite
+			remoteSide = chess.SideBlack
+		}
+
+		// 协议判断
+		if selfSide == chess.SideWhite && gameContext.Gstate != GameStateWaitingWhiteUpgrade {
+			selfContext.Conn.Close()
+			return nil
+		}
+		if selfSide == chess.SideBlack && gameContext.Gstate != GameStateWaitingBlackUpgrade {
+			selfContext.Conn.Close()
+			return nil
+		}
+
+		// 协议判断, 检查升变的棋子是否合法, 只允许以下4种棋子
+		if packet.ChessPieceType != chess.ChessPieceTypeRook && packet.ChessPieceType != chess.ChessPieceTypeBishop &&
+			packet.ChessPieceType != chess.ChessPieceTypeKnight && packet.ChessPieceType != chess.ChessPieceTypeQueen {
+			selfContext.Conn.Close()
+			return nil
+		}
+
+		chesstool.DoUpgrade(gameContext.Table, packet.ChessPieceType)
+		notifyUpgradeOK := packets.PacketServerRemoteUpgradeOK{
+			Table: gameContext.Table,
+		}
+		if gameContext.DrawAfterUpgrade {
+			notifyUpgradeOK.RemoteRequestDraw = true
+			gameContext.DrawAfterUpgrade = false
+			if selfSide == chess.SideWhite {
+				gameContext.Gstate = GameStateWaitingBlackAcceptDraw
+			} else {
+				gameContext.Gstate = GameStateWaitingBlackAcceptDraw
+			}
+		} else {
+			if selfSide == chess.SideWhite {
+				gameContext.Gstate = GameStateWaitingBlackPut
+			} else {
+				gameContext.Gstate = GameStateWaitingWhitePut
+			}
+		}
+		notifyUpgradeOKBytesWithHeader := packtool.DoPackWith4BytesHeader(notifyUpgradeOK.MustMarshalToBytes())
+		remoteContext.Conn.Send(notifyUpgradeOKBytesWithHeader)
+
+		notifySelfUpgradeOK := packets.PacketServerUpgradeOK{
+			Table: gameContext.Table,
+		}
+		notifySelfUpgradeOKBytesWithHeader := packtool.DoPackWith4BytesHeader(notifySelfUpgradeOK.MustMarshalToBytes())
+		selfContext.Conn.Send(notifySelfUpgradeOKBytesWithHeader)
+
+		return nil
+	case *packets.PacketClientDoSurrender:
+		// 协议判断
+		if ConnMap[connID].ConnState != ConnStateGaming {
+			ConnMap[connID].Conn.Close()
+			return nil
+		}
+
+		var gameContext = ConnMap[connID].Gcontext
+		var selfContext *ConnContext = ConnMap[connID]
+		var selfSide chess.Side
+		var remoteContext *ConnContext
+		var remoteSide chess.Side
+		othertool.Ignore(remoteContext)
+		othertool.Ignore(remoteSide)
+		if gameContext.BlackConnContext == selfContext {
+			remoteContext = gameContext.WhiteConnContext
+			selfSide = chess.SideBlack
+			remoteSide = chess.SideWhite
+		} else {
+			remoteContext = gameContext.BlackConnContext
+			selfSide = chess.SideWhite
+			remoteSide = chess.SideBlack
+		}
+
+		gameOverPacket := packets.PacketServerGameOver{
+			Table:       gameContext.Table,
+			WinnerSide:  selfSide,
+			IsSurrender: true,
+		}
+		gameOverPacketBytesWithHeader := packtool.DoPackWith4BytesHeader(gameOverPacket.MustMarshalToBytes())
+		selfContext.Conn.Send(gameOverPacketBytesWithHeader)
+		remoteContext.Conn.Send(gameOverPacketBytesWithHeader)
+		selfContext.Gcontext = nil
+		selfContext.ConnState = ConnStateNone
+		remoteContext.Gcontext = nil
+		remoteContext.ConnState = ConnStateNone
+		return nil
+	case *packets.PacketClientWheatherAcceptDraw:
+		// 协议判断
+		if ConnMap[connID].ConnState != ConnStateGaming {
+			ConnMap[connID].Conn.Close()
+			return nil
+		}
+
+		var gameContext = ConnMap[connID].Gcontext
+		var selfContext *ConnContext = ConnMap[connID]
+		var selfSide chess.Side
+		var remoteContext *ConnContext
+		var remoteSide chess.Side
+		othertool.Ignore(remoteContext)
+		othertool.Ignore(remoteSide)
+		if gameContext.BlackConnContext == selfContext {
+			remoteContext = gameContext.WhiteConnContext
+			selfSide = chess.SideBlack
+			remoteSide = chess.SideWhite
+		} else {
+			remoteContext = gameContext.BlackConnContext
+			selfSide = chess.SideWhite
+			remoteSide = chess.SideBlack
+		}
+
+		// 判断更多协议错误
+		if selfSide == chess.SideWhite && gameContext.Gstate != GameStateWaitingWhiteAcceptDraw {
+			ConnMap[connID].Conn.Close()
+			return nil
+		}
+		if selfSide == chess.SideBlack && gameContext.Gstate != GameStateWaitingBlackAcceptDraw {
+			ConnMap[connID].Conn.Close()
+			return nil
+		}
+
+		if packet.AcceptDraw {
+			gameOver := packets.PacketServerGameOver{
+				Table:       gameContext.Table,
+				WinnerSide:  chess.SideBoth,
+				IsSurrender: false,
+				IsDraw:      true,
+			}
+			gameOverBytesWithHeader := packtool.DoPackWith4BytesHeader(gameOver.MustMarshalToBytes())
+			selfContext.Conn.Send(gameOverBytesWithHeader)
+			remoteContext.Conn.Send(gameOverBytesWithHeader)
+			selfContext.ConnState = ConnStateNone
+			selfContext.Gcontext = nil
+			remoteContext.ConnState = ConnStateNone
+			remoteContext.Gcontext = nil
+			return nil
+		} else {
+		}
 	case nil:
 		// 协议错误, 直接关闭
 		c.Close()

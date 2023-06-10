@@ -45,6 +45,15 @@ const (
 
 	// 对方下棋下好了
 	PacketTypeServerNotifyRemoteMove
+
+	// 告知对方, 自己是否接受和棋
+	PacketTypeClientWheatherAcceptDraw
+
+	PacketTypeClientDoSurrender
+
+	PacketTypeServerRemoteUpgradeOK
+
+	PacketTypeServerUpgradeOK
 )
 
 type PacketHeader struct {
@@ -119,6 +128,9 @@ type PacketClientMove struct {
 	FromY int  `json:"from_y"`
 	ToX   rune `json:"to_x"`
 	ToY   int  `json:"to_y"`
+
+	// 和棋
+	DoDraw bool `json:"do_draw"`
 }
 
 func (p *PacketClientMove) MustMarshalToBytes() []byte {
@@ -152,8 +164,9 @@ type PacketServerMoveResp struct {
 	PacketHeader
 	MoveRespType PacketTypeServerMoveRespType `json:"resp_type"`
 	// 下面的字段只有在状态OK的时候出现
-	TableOnOK  *chess.ChessTable `json:"table,omitempty"`
-	KingThreat bool              `json:"king_threat"`
+	TableOnOK   *chess.ChessTable `json:"table,omitempty"`
+	KingThreat  bool              `json:"king_threat"`
+	PawnUpgrade bool              `json:"pawn_upgrade"`
 }
 
 func (p *PacketServerMoveResp) MustMarshalToBytes() []byte {
@@ -169,8 +182,10 @@ func (p *PacketServerMoveResp) MustMarshalToBytes() []byte {
 
 type PacketServerGameOver struct {
 	PacketHeader
-	Table      *chess.ChessTable `json:"final_table"`
-	WinnerSide chess.Side        `json:"winner_side"`
+	Table       *chess.ChessTable `json:"final_table"`
+	WinnerSide  chess.Side        `json:"winner_side"`
+	IsSurrender bool              `json:"is_surrender"`
+	IsDraw      bool              `json:"is_draw"`
 }
 
 func (p *PacketServerGameOver) MustMarshalToBytes() []byte {
@@ -204,10 +219,75 @@ type PacketServerNotifyRemoteMove struct {
 	Table             *chess.ChessTable `json:"table"`
 	RemotePawnUpgrade bool              `json:"remote_pawn_upgrade"`
 	KingThreat        bool              `json:"king_threat"`
+	RemoteRequestDraw bool              `json:"RemoteRequestDraw"`
 }
 
 func (p *PacketServerNotifyRemoteMove) MustMarshalToBytes() []byte {
 	i := PacketTypeServerNotifyRemoteMove
+	p.Type = &i
+	bs, err := json.Marshal(p)
+	if err != nil {
+		panic(err)
+	}
+
+	return bs
+}
+
+type PacketClientWheatherAcceptDraw struct {
+	PacketHeader
+	AcceptDraw bool `json:"accept_draw"`
+}
+
+func (p *PacketClientWheatherAcceptDraw) MustMarshalToBytes() []byte {
+	i := PacketTypeClientWheatherAcceptDraw
+	p.Type = &i
+	bs, err := json.Marshal(p)
+	if err != nil {
+		panic(err)
+	}
+
+	return bs
+}
+
+type PacketClientDoSurrender struct {
+	PacketHeader
+}
+
+func (p *PacketClientDoSurrender) MustMarshalToBytes() []byte {
+	i := PacketTypeClientDoSurrender
+	p.Type = &i
+	bs, err := json.Marshal(p)
+	if err != nil {
+		panic(err)
+	}
+
+	return bs
+}
+
+type PacketServerRemoteUpgradeOK struct {
+	PacketHeader
+	Table             *chess.ChessTable `json:"table"`
+	RemoteRequestDraw bool              `json:"remote_request_draw"`
+}
+
+func (p *PacketServerRemoteUpgradeOK) MustMarshalToBytes() []byte {
+	i := PacketTypeServerRemoteUpgradeOK
+	p.Type = &i
+	bs, err := json.Marshal(p)
+	if err != nil {
+		panic(err)
+	}
+
+	return bs
+}
+
+type PacketServerUpgradeOK struct {
+	PacketHeader
+	Table *chess.ChessTable `json:"table"`
+}
+
+func (p *PacketServerUpgradeOK) MustMarshalToBytes() []byte {
+	i := PacketTypeServerUpgradeOK
 	p.Type = &i
 	bs, err := json.Marshal(p)
 	if err != nil {
