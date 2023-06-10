@@ -2,6 +2,7 @@ package chess
 
 import (
 	"chess-backend/comm/chess"
+	"math"
 )
 
 type MoveResult struct {
@@ -26,11 +27,7 @@ func isOnSameLine(aX rune, aY int, bX rune, bY int) bool {
 // 判断两个坐标是不是倾斜的
 func isTwoIndexIncline(ax int, ay int, bx int, by int) bool {
 	// 防止除0异常
-	if ay == by {
-		return false
-	}
-	tmp := ax - bx/ay - by
-	return tmp == 1 || tmp == -1
+	return math.Abs(float64(ax-bx)) == math.Abs(float64(ay-by))
 }
 
 // 判定两个点中间是否有直线
@@ -51,6 +48,7 @@ func hasChessBetweenTwoPointsInLine(table *chess.ChessTable, aX rune, aY int, bX
 
 		for y0 := yMin + 1; y0 < yMax; y0++ {
 			if table[y0*8+x1] != nil {
+				println(2)
 				return true
 			}
 		}
@@ -65,7 +63,8 @@ func hasChessBetweenTwoPointsInLine(table *chess.ChessTable, aX rune, aY int, bX
 			xMax = x2
 		}
 
-		for x0 := xMin + 1; xMin < xMax; x0++ {
+		for x0 := xMin + 1; x0 < xMax; x0++ {
+			println(1)
 			if table[y1*8+x0] != nil {
 				return true
 			}
@@ -78,13 +77,27 @@ func hasChessBetweenTwoPointsInLine(table *chess.ChessTable, aX rune, aY int, bX
 // 这个函数要求两个点是倾斜排布的
 // 判定两个倾斜的点中间是否有棋挡住
 func hasChessBetweenTwoInclinedPoints(table *chess.ChessTable, ax, bx, ay, by int) bool {
-	dx := bx - ax
-	dy := by - ay
-	for x0, y0 := ax, bx; x0 != bx; x0, y0 = x0+dx, y0+dy {
+	var diffX int
+	var diffY int
+
+	if by > ay {
+		diffY = 1
+	} else {
+		diffY = -1
+	}
+
+	if bx > ax {
+		diffX = 1
+	} else {
+		diffX = -1
+	}
+
+	for x0, y0 := ax+diffX, bx+diffX; CheckChessIndexValid(x0, y0) && x0 != bx; x0, y0 = x0+diffX, y0+diffY {
 		if table.GetIndex(x0, y0) != nil {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -96,6 +109,56 @@ func checkIndexThreat(table *chess.ChessTable, side chess.Side, x int, y int) bo
 		remoteSide = chess.SideWhite
 	} else {
 		remoteSide = chess.SideBlack
+	}
+
+	// 0. 检查周围9个格子内有没有对方的king
+	if x0, y0 := x+1, y+1; CheckChessIndexValid(x0, y0) {
+		if table.GetIndex(x0, y0) != nil &&
+			table.GetIndex(x0, y0).PieceType == chess.ChessPieceTypeKing && table.GetIndex(x0, y0).GameSide != side {
+			return true
+		}
+	}
+	if x0, y0 := x+1, y-1; CheckChessIndexValid(x0, y0) {
+		if table.GetIndex(x0, y0) != nil &&
+			table.GetIndex(x0, y0).PieceType == chess.ChessPieceTypeKing && table.GetIndex(x0, y0).GameSide != side {
+			return true
+		}
+	}
+	if x0, y0 := x-1, y+1; CheckChessIndexValid(x0, y0) {
+		if table.GetIndex(x0, y0) != nil &&
+			table.GetIndex(x0, y0).PieceType == chess.ChessPieceTypeKing && table.GetIndex(x0, y0).GameSide != side {
+			return true
+		}
+	}
+	if x0, y0 := x-1, y-1; CheckChessIndexValid(x0, y0) {
+		if table.GetIndex(x0, y0) != nil &&
+			table.GetIndex(x0, y0).PieceType == chess.ChessPieceTypeKing && table.GetIndex(x0, y0).GameSide != side {
+			return true
+		}
+	}
+	if x0, y0 := x, y+1; CheckChessIndexValid(x0, y0) {
+		if table.GetIndex(x0, y0) != nil &&
+			table.GetIndex(x0, y0).PieceType == chess.ChessPieceTypeKing && table.GetIndex(x0, y0).GameSide != side {
+			return true
+		}
+	}
+	if x0, y0 := x, y-1; CheckChessIndexValid(x0, y0) {
+		if table.GetIndex(x0, y0) != nil &&
+			table.GetIndex(x0, y0).PieceType == chess.ChessPieceTypeKing && table.GetIndex(x0, y0).GameSide != side {
+			return true
+		}
+	}
+	if x0, y0 := x+1, y; CheckChessIndexValid(x0, y0) {
+		if table.GetIndex(x0, y0) != nil &&
+			table.GetIndex(x0, y0).PieceType == chess.ChessPieceTypeKing && table.GetIndex(x0, y0).GameSide != side {
+			return true
+		}
+	}
+	if x0, y0 := x-1, y; CheckChessIndexValid(x0, y0) {
+		if table.GetIndex(x0, y0) != nil &&
+			table.GetIndex(x0, y0).PieceType == chess.ChessPieceTypeKing && table.GetIndex(x0, y0).GameSide != side {
+			return true
+		}
 	}
 
 	// 1. 检查pawn的threat, 即为对角位置是兵
@@ -403,6 +466,8 @@ func findAllJustMoved2Pawn(table *chess.ChessTable) []*chess.ChessPiece {
 
 // 输入规则: 不同且合法的坐标
 func DoMove(table *chess.ChessTable, side chess.Side, fromX rune, fromY int, toX rune, toY int) (result MoveResult) {
+	println("了")
+
 	// 一些要用到的基本数据
 	fromx, fromy := chess.MustPositionToIndex(fromX, fromY)
 	tox, toy := chess.MustPositionToIndex(toX, toY)
@@ -438,17 +503,21 @@ func DoMove(table *chess.ChessTable, side chess.Side, fromX rune, fromY int, toX
 	}
 
 	// 判断棋子的类型, 4种基本棋子做一套逻辑
-	if fromPiece.PieceType != chess.ChessPieceTypeKing && fromPiece.PieceType != chess.ChessPieceTypePawn {
+	if fromPiece.PieceType != chess.ChessPieceTypeKing &&
+		fromPiece.PieceType != chess.ChessPieceTypePawn {
+		println("进入了")
 		switch fromPiece.PieceType {
 		case chess.ChessPieceTypeRook:
 			// 不在同一条直线
 			if !isOnSameLine(fromX, fromY, toX, toY) {
+				println("123")
 				result.OK = false
 				return
 			}
 
 			// 中间有别的棋子
 			if hasChessBetweenTwoPointsInLine(table, fromX, fromY, toX, toY) {
+				println("456")
 				result.OK = false
 				return
 			}
@@ -468,13 +537,15 @@ func DoMove(table *chess.ChessTable, side chess.Side, fromX rune, fromY int, toX
 			}
 		case chess.ChessPieceTypeBishop:
 			// 非倾斜
-			if !isTwoIndexIncline(fromx, fromy, tox, toY) {
+			if !isTwoIndexIncline(fromx, fromy, tox, toy) {
+				println("ppp")
 				result.OK = false
 				return
 			}
 
 			// 有格挡
-			if hasChessBetweenTwoInclinedPoints(table, fromx, fromy, tox, toY) {
+			if hasChessBetweenTwoInclinedPoints(table, fromx, fromy, tox, toy) {
+				println("qqq")
 				result.OK = false
 				return
 			}
@@ -487,6 +558,7 @@ func DoMove(table *chess.ChessTable, side chess.Side, fromX rune, fromY int, toX
 		case chess.ChessPieceTypeQueen:
 			// 不合法的位移
 			if !isOnSameLine(fromX, fromY, toX, toY) && !isTwoIndexIncline(fromx, fromy, tox, toy) {
+				println(11111)
 				result.OK = false
 				return
 			}
@@ -494,12 +566,14 @@ func DoMove(table *chess.ChessTable, side chess.Side, fromX rune, fromY int, toX
 			// 有格挡
 			if isOnSameLine(fromX, fromY, toX, toY) && hasChessBetweenTwoPointsInLine(table, fromX, fromY, toX, toY) {
 				result.OK = false
+				println(22222)
 				return
 			}
 
 			// 有格挡
 			if isTwoIndexIncline(fromx, fromy, tox, toy) && hasChessBetweenTwoInclinedPoints(table, fromx, fromy, toy, toy) {
 				result.OK = false
+				println(33333)
 				return
 			}
 		}
@@ -599,8 +673,15 @@ func DoMove(table *chess.ChessTable, side chess.Side, fromX rune, fromY int, toX
 				return
 			}
 
+			testTable := table.Copy()
+			testFromPiece := testTable.GetPosition(fromX, fromY)
+			testTable.ClearPosition(fromX, fromY)
+			testFromPiece.X = toX
+			testFromPiece.Y = toY
+			testTable.SetPosition(testFromPiece)
+
 			// to的地方不能有威胁
-			if checkIndexThreat(table, side, tox, toy) {
+			if checkIndexThreat(testTable, side, tox, toy) {
 				result.OK = false
 				return
 			}
@@ -823,7 +904,7 @@ func DoMove(table *chess.ChessTable, side chess.Side, fromX rune, fromY int, toX
 				}
 			}
 
-			pawnUpgrade = toy == 8
+			pawnUpgrade = toy == 7
 		} else {
 			if toy >= fromy {
 				result.OK = false
@@ -911,8 +992,10 @@ func DoMove(table *chess.ChessTable, side chess.Side, fromX rune, fromY int, toX
 			v.PawnMovedTwoLastTime = false
 		}
 	}
+
 	// 处理兵升变
 	result.PawnUpgrade = pawnUpgrade
+	println(result.PawnUpgrade)
 
 	// 找到对方的king
 	remoteKing := findKing(table, remoteSide)

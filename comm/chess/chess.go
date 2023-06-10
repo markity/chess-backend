@@ -96,6 +96,18 @@ func (ct *ChessTable) Copy() *ChessTable {
 	return &table
 }
 
+// 测试upgrade
+func NewTestTable1() *ChessTable {
+	var table ChessTable
+
+	table.SetPosition(&ChessPiece{X: 'e', Y: 1, PieceType: ChessPieceTypeKing, GameSide: SideWhite, Moved: false})
+	table.SetPosition(&ChessPiece{X: 'e', Y: 8, PieceType: ChessPieceTypeKing, GameSide: SideBlack, Moved: false})
+	table.SetPosition(&ChessPiece{X: 'h', Y: 7, PieceType: ChessPieceTypePawn, GameSide: SideWhite, Moved: false, PawnMovedTwoLastTime: false})
+	table.SetPosition(&ChessPiece{X: 'a', Y: 7, PieceType: ChessPieceTypeQueen, GameSide: SideWhite, Moved: false, PawnMovedTwoLastTime: false})
+
+	return &table
+}
+
 func NewChessTable() *ChessTable {
 	var table ChessTable
 	table.SetPosition(&ChessPiece{X: 'a', Y: 1, PieceType: ChessPieceTypeRook, GameSide: SideWhite, Moved: false})
