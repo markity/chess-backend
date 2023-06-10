@@ -65,12 +65,14 @@ func (ch *ConnHandler) OnClose(c *gev.Connection) {
 }
 
 func (ch *ConnHandler) OnMessage(c *gev.Connection, ctx interface{}, data []byte) interface{} {
-	connID := c.Context().(int)
-	packetBytes, ok := packtool.IsBytesCompleteWith4BytesHeader(data)
-	if !ok {
+	// 没有收到消息
+	if data == nil {
 		return nil
 	}
-	packIface := packets.ServerParse(packetBytes)
+
+	connID := c.Context().(int)
+
+	packIface := packets.ServerParse(data)
 
 	ConnMapLock.Lock()
 	defer ConnMapLock.Unlock()
@@ -190,10 +192,6 @@ func (ch *ConnHandler) OnMessage(c *gev.Connection, ctx interface{}, data []byte
 			return nil
 		}
 
-		// 加分
-		gameContext.BlockScore += result.BlackScoreAdd
-		gameContext.WhiteScore += result.WhiteScoreAdd
-
 		if !result.GameOver {
 			// 处理兵的升变问题
 			moveRespType := packets.PacketTypeServerMoveRespTypeOK
@@ -222,8 +220,6 @@ func (ch *ConnHandler) OnMessage(c *gev.Connection, ctx interface{}, data []byte
 		gameOverPacket := packets.PacketServerGameOver{
 			Table:      gameContext.Table,
 			WinnerSide: selfSide,
-			BlackScore: gameContext.BlockScore,
-			WhiteScore: gameContext.WhiteScore,
 		}
 		gameOverPacketBytesWithHeader := packtool.DoPackWith4BytesHeader(gameOverPacket.MustMarshalToBytes())
 		selfContext.Conn.Send(gameOverPacketBytesWithHeader)

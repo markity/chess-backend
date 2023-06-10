@@ -11,3 +11,7 @@ func CheckChessPostsionVaild(x rune, y int) bool {
 
 	return true
 }
+
+func CheckChessIndexValid(x int, y int) bool {
+	return x >= 0 && x <= 7 && y >= 0 && y <= 7
+}

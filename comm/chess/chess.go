@@ -22,6 +22,7 @@ type Side int
 const (
 	SideWhite Side = iota
 	SideBlack
+	SideBoth
 )
 
 // 棋子
@@ -60,6 +61,10 @@ func (ct *ChessTable) ClearPosition(X rune, Y int) *ChessPiece {
 
 func (ct *ChessTable) GetPosition(X rune, Y int) *ChessPiece {
 	x, y := MustPositionToIndex(X, Y)
+	return ct[y*8+x]
+}
+
+func (ct *ChessTable) GetIndex(x int, y int) *ChessPiece {
 	return ct[y*8+x]
 }
 

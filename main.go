@@ -3,6 +3,7 @@ package main
 import (
 	"chess-backend/comm/settings"
 	"chess-backend/game"
+	"chess-backend/tools/protocol"
 	"fmt"
 	"runtime"
 	"time"
@@ -16,6 +17,7 @@ func main() {
 		gev.Network("tcp"),
 		gev.LoadBalance(gev.RoundRobin()),
 		gev.NumLoops(runtime.NumCPU()),
+		gev.CustomProtocol(&protocol.Protocol{}),
 	)
 	if err != nil {
 		panic(err)

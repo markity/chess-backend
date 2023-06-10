@@ -23,8 +23,6 @@ type GameContext struct {
 	WhiteConnContext *ConnContext
 	Gstate           GameState
 	Table            *chess.ChessTable
-	WhiteScore       int
-	BlockScore       int
 }
 
 // 包含所有连接的上下文, 用锁保护

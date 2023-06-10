@@ -170,8 +170,6 @@ type PacketServerGameOver struct {
 	PacketHeader
 	Table      *chess.ChessTable `json:"final_table"`
 	WinnerSide chess.Side        `json:"winner_side"`
-	BlackScore int               `json:"black_score"`
-	WhiteScore int               `json:"white_score"`
 }
 
 func (p *PacketServerGameOver) MustMarshalToBytes() []byte {
