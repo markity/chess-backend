@@ -152,7 +152,8 @@ type PacketServerMoveResp struct {
 	PacketHeader
 	MoveRespType PacketTypeServerMoveRespType `json:"resp_type"`
 	// 下面的字段只有在状态OK的时候出现
-	TableOnOK *chess.ChessTable `json:"table,omitempty"`
+	TableOnOK  *chess.ChessTable `json:"table,omitempty"`
+	KingThreat bool              `json:"king_threat"`
 }
 
 func (p *PacketServerMoveResp) MustMarshalToBytes() []byte {
@@ -202,6 +203,7 @@ type PacketServerNotifyRemoteMove struct {
 	PacketHeader
 	Table             *chess.ChessTable `json:"table"`
 	RemotePawnUpgrade bool              `json:"remote_pawn_upgrade"`
+	KingThreat        bool              `json:"king_threat"`
 }
 
 func (p *PacketServerNotifyRemoteMove) MustMarshalToBytes() []byte {

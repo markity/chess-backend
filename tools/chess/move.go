@@ -752,6 +752,67 @@ func DoMove(table *chess.ChessTable, side chess.Side, fromX rune, fromY int, toX
 				return
 			}
 
+			diffY := fromy - toy
+			diffX := fromx - tox
+
+			// 共6中情况
+			if diffX != 1 && diffX != -1 && diffX != 0 {
+				result.OK = false
+				return
+			}
+			if diffY != 2 && diffY != 1 {
+				result.OK = false
+				return
+			}
+
+			// 2种
+			if diffY == 2 && diffX != 0 {
+				result.OK = false
+				return
+				// 1种
+			} else if diffY == 2 && diffX == 0 {
+				if fromPiece.Moved {
+					result.OK = false
+					return
+				}
+
+				// 再判断是否有挡住的
+				if hasChessBetweenTwoPointsInLine(table, fromX, fromY, toX, toY) {
+					result.OK = false
+					return
+				}
+
+				// 判断to是否有子
+				if table.GetPosition(toX, toY) != nil {
+					result.OK = false
+					return
+				}
+
+				// 2
+			} else if diffY == 1 && diffX != 0 {
+				// 必须斜着吃, 这里需要判断一下吃过路兵
+				if toPiece == nil {
+					if justMoveTwoPawn := findJustMoved2Pawn(table); justMoveTwoPawn == nil {
+						result.OK = false
+						return
+					} else {
+						justMoveTwoPawnX, justMoveTwoPawnY := chess.MustPositionToIndex(justMoveTwoPawn.X, justMoveTwoPawn.Y)
+						if justMoveTwoPawnY-toy != 1 || tox != justMoveTwoPawnX {
+							result.OK = false
+							return
+						}
+						// 这里要吃掉过路兵
+						table.ClearPosition(justMoveTwoPawn.X, justMoveTwoPawnY)
+					}
+				}
+				// 1 diffY == 1 && diffX == 0
+			} else {
+				if toPiece != nil {
+					result.OK = false
+					return
+				}
+			}
+
 			pawnUpgrade = toy == 0
 		}
 	}

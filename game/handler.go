@@ -194,32 +194,42 @@ func (ch *ConnHandler) OnMessage(c *gev.Connection, ctx interface{}, data []byte
 
 		if !result.GameOver {
 			// 处理兵的升变问题
-			moveRespType := packets.PacketTypeServerMoveRespTypeOK
 			if result.PawnUpgrade {
-				moveRespType = packets.PacketTypeServerMoveRespTypePawnUpgrade
-			}
+				moveOKPacket := packets.PacketServerMoveResp{
+					MoveRespType: packets.PacketTypeServerMoveRespTypePawnUpgrade,
+					TableOnOK:    gameContext.Table,
+					KingThreat:   result.KingThreat,
+				}
+				moveOKPacketBytesWithHeader := packtool.DoPackWith4BytesHeader(moveOKPacket.MustMarshalToBytes())
+				selfContext.Conn.Send(moveOKPacketBytesWithHeader)
 
-			// move ok, 做通知
-			moveOKPacket := packets.PacketServerMoveResp{
-				MoveRespType: moveRespType,
-				TableOnOK:    gameContext.Table,
-			}
-			moveOKPacketBytesWithHeader := packtool.DoPackWith4BytesHeader(moveOKPacket.MustMarshalToBytes())
-			selfContext.Conn.Send(moveOKPacketBytesWithHeader)
+				remoteMovePacket := packets.PacketServerNotifyRemoteMove{
+					Table:             gameContext.Table,
+					RemotePawnUpgrade: true,
+				}
+				remoteContext.Conn.Send(remoteMovePacket)
+			} else {
+				moveOKPacket := packets.PacketServerMoveResp{
+					MoveRespType: packets.PacketTypeServerMoveRespTypeOK,
+					TableOnOK:    gameContext.Table,
+				}
+				moveOKPacketBytesWithHeader := packtool.DoPackWith4BytesHeader(moveOKPacket.MustMarshalToBytes())
+				selfContext.Conn.Send(moveOKPacketBytesWithHeader)
 
-			remoteMovePacket := packets.PacketServerNotifyRemoteMove{
-				Table:             gameContext.Table,
-				RemotePawnUpgrade: moveRespType == packets.PacketTypeServerMoveRespTypePawnUpgrade,
+				remoteMovePacket := packets.PacketServerNotifyRemoteMove{
+					Table:             gameContext.Table,
+					RemotePawnUpgrade: false,
+					KingThreat:        result.KingThreat,
+				}
+				remoteContext.Conn.Send(remoteMovePacket)
 			}
-			remoteContext.Conn.Send(remoteMovePacket)
-
 			return nil
 		}
 
 		// game over, 发送消息, 清空资源
 		gameOverPacket := packets.PacketServerGameOver{
 			Table:      gameContext.Table,
-			WinnerSide: selfSide,
+			WinnerSide: result.GameWinner,
 		}
 		gameOverPacketBytesWithHeader := packtool.DoPackWith4BytesHeader(gameOverPacket.MustMarshalToBytes())
 		selfContext.Conn.Send(gameOverPacketBytesWithHeader)
