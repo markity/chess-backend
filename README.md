@@ -27,7 +27,7 @@ mov a2 a3                                           移动
 dmov a2 a3                                          移动并提出议和
 accept                                              接受对方的议和
 refuse                                              拒绝对方的议和
-swi bishop/knight/rook/queen  进行一个兵的升变
+swi bishop/knight/rook/queen                        进行一个兵的升变
 sur                                                 直接投降
 ```
 
