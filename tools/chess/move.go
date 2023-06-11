@@ -282,6 +282,7 @@ func checkIndexThreat(table *chess.ChessTable, side chess.Side, x int, y int) bo
 		}
 	}
 	for x0, y0 := x, y+1; CheckChessIndexValid(x0, y0); y0 = y0 + 1 {
+		println(x0, y0)
 		p := table.GetIndex(x0, y0)
 		if p != nil {
 			// 被自家棋子挡住了, 这是安全的
@@ -703,18 +704,28 @@ func DoMove(table *chess.ChessTable, side chess.Side, fromX rune, fromY int, toX
 					// 检查路过的威胁
 					testTable1 := table.Copy()
 					testFromPiece := testTable1.GetPosition(fromX, fromY)
+					testRookPiece := testTable1.GetPosition('h', 1)
 					testTable1.ClearPosition(fromX, fromY)
+					testTable1.ClearPosition(testFromPiece.X, testRookPiece.Y)
 					testFromPiece.X = 'f'
 					testFromPiece.Y = 1
+					testRookPiece.X = 'e'
+					testRookPiece.Y = 1
 					testTable1.SetPosition(testFromPiece)
+					testTable1.SetPosition(testRookPiece)
 
 					testTable2 := table.Copy()
 					testFromPiece2 := testTable2.GetPosition(fromX, fromY)
+					testRookPiece2 := testTable2.GetPosition('h', 1)
 					testTable1.ClearPosition(fromX, fromY)
+					testTable2.ClearPosition(testRookPiece2.X, testFromPiece2.Y)
 					testFromPiece2.X = 'g'
 					testFromPiece2.Y = 1
+					testRookPiece2.X = 'e'
+					testRookPiece2.Y = 1
 					testTable1.SetPosition(testFromPiece2)
-					if checkIndexThreat(testTable1, side, 'f', 1) || checkIndexThreat(testTable2, side, 'g', 1) {
+					testTable1.SetPosition(testRookPiece2)
+					if checkPositionThreat(testTable1, side, 'f', 1) || checkPositionThreat(testTable2, side, 'g', 1) {
 						result.OK = false
 						return
 					}
@@ -730,7 +741,7 @@ func DoMove(table *chess.ChessTable, side chess.Side, fromX rune, fromY int, toX
 					rookPiece.Y = 1
 					fromPiece.Moved = true
 					table.SetPosition(rookPiece)
-					// 长
+					// 长 to = c
 				} else {
 					rookPiece := table.GetPosition('a', 1)
 
@@ -755,18 +766,28 @@ func DoMove(table *chess.ChessTable, side chess.Side, fromX rune, fromY int, toX
 					// 检查路过的威胁
 					testTable1 := table.Copy()
 					testFromPiece := testTable1.GetPosition(fromX, fromY)
+					testRookPiece := testTable1.GetPosition('a', 1)
 					testTable1.ClearPosition(fromX, fromY)
-					testFromPiece.X = 'c'
+					testTable1.ClearPosition(testRookPiece.X, testRookPiece.Y)
+					testFromPiece.X = 'd'
 					testFromPiece.Y = 1
+					// 让车帮忙档一下, 比较易于算威胁
+					testRookPiece.X = 'e'
+					testRookPiece.Y = 1
 					testTable1.SetPosition(testFromPiece)
 
 					testTable2 := table.Copy()
 					testFromPiece2 := testTable2.GetPosition(fromX, fromY)
-					testTable1.ClearPosition(fromX, fromY)
-					testFromPiece2.X = 'd'
+					testRookPiece2 := testTable2.GetPosition('a', 1)
+					testTable2.ClearPosition(fromX, fromY)
+					testTable2.ClearPosition(testRookPiece2.X, testRookPiece2.Y)
+					testFromPiece2.X = 'c'
 					testFromPiece2.Y = 1
-					testTable1.SetPosition(testFromPiece2)
-					if checkIndexThreat(testTable1, side, 'c', 1) || checkIndexThreat(testTable2, side, 'd', 1) {
+					testRookPiece2.X = 'd'
+					testRookPiece2.Y = 1
+					testTable2.SetPosition(testFromPiece2)
+					testTable2.SetPosition(testRookPiece2)
+					if checkPositionThreat(testTable1, side, 'd', 1) || checkPositionThreat(testTable2, side, 'c', 1) {
 						result.OK = false
 						return
 					}
@@ -809,18 +830,28 @@ func DoMove(table *chess.ChessTable, side chess.Side, fromX rune, fromY int, toX
 					// 检查路过的威胁
 					testTable1 := table.Copy()
 					testFromPiece := testTable1.GetPosition(fromX, fromY)
+					testRookPiece := testTable1.GetPosition('h', 8)
 					testTable1.ClearPosition(fromX, fromY)
+					testTable1.ClearPosition(testFromPiece.X, testRookPiece.Y)
 					testFromPiece.X = 'f'
 					testFromPiece.Y = 8
+					testRookPiece.X = 'e'
+					testRookPiece.Y = 8
 					testTable1.SetPosition(testFromPiece)
+					testTable1.SetPosition(testRookPiece)
 
 					testTable2 := table.Copy()
 					testFromPiece2 := testTable2.GetPosition(fromX, fromY)
+					testRookPiece2 := testTable2.GetPosition('h', 8)
 					testTable1.ClearPosition(fromX, fromY)
+					testTable2.ClearPosition(testRookPiece2.X, testFromPiece2.Y)
 					testFromPiece2.X = 'g'
 					testFromPiece2.Y = 8
+					testRookPiece2.X = 'e'
+					testRookPiece2.Y = 8
 					testTable1.SetPosition(testFromPiece2)
-					if checkIndexThreat(testTable1, side, 'f', 1) || checkIndexThreat(testTable2, side, 'g', 1) {
+					testTable1.SetPosition(testRookPiece2)
+					if checkPositionThreat(testTable1, side, 'f', 8) || checkPositionThreat(testTable2, side, 'g', 8) {
 						result.OK = false
 						return
 					}
@@ -836,7 +867,7 @@ func DoMove(table *chess.ChessTable, side chess.Side, fromX rune, fromY int, toX
 					rookPiece.Y = 8
 					fromPiece.Moved = true
 					table.SetPosition(rookPiece)
-					// 长
+					// 长 to = c
 				} else {
 					rookPiece := table.GetPosition('a', 8)
 
@@ -861,18 +892,28 @@ func DoMove(table *chess.ChessTable, side chess.Side, fromX rune, fromY int, toX
 					// 检查路过的威胁
 					testTable1 := table.Copy()
 					testFromPiece := testTable1.GetPosition(fromX, fromY)
+					testRookPiece := testTable1.GetPosition('a', 1)
 					testTable1.ClearPosition(fromX, fromY)
-					testFromPiece.X = 'e'
+					testTable1.ClearPosition(testRookPiece.X, testRookPiece.Y)
+					testFromPiece.X = 'd'
 					testFromPiece.Y = 8
+					// 让车帮忙档一下, 比较易于算威胁
+					testRookPiece.X = 'e'
+					testRookPiece.Y = 8
 					testTable1.SetPosition(testFromPiece)
 
 					testTable2 := table.Copy()
 					testFromPiece2 := testTable2.GetPosition(fromX, fromY)
-					testTable1.ClearPosition(fromX, fromY)
-					testFromPiece2.X = 'd'
+					testRookPiece2 := testTable2.GetPosition('a', 8)
+					testTable2.ClearPosition(fromX, fromY)
+					testTable2.ClearPosition(testRookPiece2.X, testRookPiece2.Y)
+					testFromPiece2.X = 'c'
 					testFromPiece2.Y = 8
-					testTable1.SetPosition(testFromPiece2)
-					if checkIndexThreat(testTable1, side, 'e', 8) || checkIndexThreat(testTable2, side, 'd', 8) {
+					testRookPiece2.X = 'd'
+					testRookPiece2.Y = 8
+					testTable2.SetPosition(testFromPiece2)
+					testTable2.SetPosition(testRookPiece2)
+					if checkPositionThreat(testTable1, side, 'd', 1) || checkPositionThreat(testTable2, side, 'c', 1) {
 						result.OK = false
 						return
 					}
@@ -1072,16 +1113,16 @@ func DoMove(table *chess.ChessTable, side chess.Side, fromX rune, fromY int, toX
 		return
 	}
 
-	// 将军但游戏没有结束
-	if kingThreat {
+	// 判断和棋
+	if !kingThreat && kingAroundAllThreat {
 		result.OK = true
-		result.GameOver = false
-		result.KingThreat = true
+		result.GameOver = true
+		result.GameWinner = chess.SideBoth
 		return
 	}
 
 	result.OK = true
 	result.GameOver = false
-	result.KingThreat = false
+	result.KingThreat = kingThreat
 	return
 }

@@ -168,7 +168,19 @@ func NewTestTable4() *ChessTable {
 	table.SetPosition(&ChessPiece{X: 'e', Y: 1, PieceType: ChessPieceTypeKing, GameSide: SideWhite, Moved: false})
 	table.SetPosition(&ChessPiece{X: 'a', Y: 1, PieceType: ChessPieceTypeRook, GameSide: SideWhite, Moved: false})
 
-	table.SetPosition(&ChessPiece{X: 'g', Y: 8, PieceType: ChessPieceTypeKing, GameSide: SideBlack, Moved: false})
+	table.SetPosition(&ChessPiece{X: 'g', Y: 8, PieceType: ChessPieceTypeKing, GameSide: SideBlack, Moved: true})
+
+	return &table
+}
+
+func NewTestTable5() *ChessTable {
+	var table ChessTable
+
+	table.SetPosition(&ChessPiece{X: 'e', Y: 1, PieceType: ChessPieceTypeKing, GameSide: SideWhite, Moved: false})
+	table.SetPosition(&ChessPiece{X: 'a', Y: 1, PieceType: ChessPieceTypeRook, GameSide: SideWhite, Moved: false})
+
+	table.SetPosition(&ChessPiece{X: 'g', Y: 8, PieceType: ChessPieceTypeKing, GameSide: SideBlack, Moved: true})
+	table.SetPosition(&ChessPiece{X: 'c', Y: 8, PieceType: ChessPieceTypeRook, GameSide: SideBlack, Moved: true})
 
 	return &table
 }
