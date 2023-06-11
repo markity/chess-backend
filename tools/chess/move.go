@@ -726,6 +726,13 @@ func DoMove(table *chess.ChessTable, side chess.Side, fromX rune, fromY int, toX
 			}
 			// 特别逻辑: 王车易位
 		} else {
+
+			// 将军的情况下不能易位
+			if checkIndexThreat(table, side, fromx, fromy) {
+				result.OK = false
+				return
+			}
+
 			// 想要王车易位, 上面已经判断了from, to的坐标了
 
 			if side == chess.SideWhite {
