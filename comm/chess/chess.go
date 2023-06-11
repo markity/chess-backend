@@ -201,6 +201,18 @@ func NewTestTable6() *ChessTable {
 	return &table
 }
 
+func NewTestTable7() *ChessTable {
+	var table ChessTable
+
+	table.SetPosition(&ChessPiece{X: 'e', Y: 1, PieceType: ChessPieceTypeKing, GameSide: SideWhite, Moved: false})
+	table.SetPosition(&ChessPiece{X: 'a', Y: 1, PieceType: ChessPieceTypeRook, GameSide: SideWhite, Moved: false})
+
+	table.SetPosition(&ChessPiece{X: 'g', Y: 8, PieceType: ChessPieceTypeKing, GameSide: SideBlack, Moved: true})
+	table.SetPosition(&ChessPiece{X: 'f', Y: 3, PieceType: ChessPieceTypeQueen, GameSide: SideBlack, Moved: true})
+
+	return &table
+}
+
 // 王车易位, 但是将军
 func NewTestTable8() *ChessTable {
 	var table ChessTable
@@ -215,14 +227,14 @@ func NewTestTable8() *ChessTable {
 	return &table
 }
 
-func NewTestTable7() *ChessTable {
+// 胜利
+func NewTestTable9() *ChessTable {
 	var table ChessTable
 
-	table.SetPosition(&ChessPiece{X: 'e', Y: 1, PieceType: ChessPieceTypeKing, GameSide: SideWhite, Moved: false})
-	table.SetPosition(&ChessPiece{X: 'a', Y: 1, PieceType: ChessPieceTypeRook, GameSide: SideWhite, Moved: false})
+	table.SetPosition(&ChessPiece{X: 'f', Y: 7, PieceType: ChessPieceTypeKing, GameSide: SideWhite, Moved: false})
+	table.SetPosition(&ChessPiece{X: 'g', Y: 1, PieceType: ChessPieceTypeRook, GameSide: SideWhite, Moved: false})
 
-	table.SetPosition(&ChessPiece{X: 'g', Y: 8, PieceType: ChessPieceTypeKing, GameSide: SideBlack, Moved: true})
-	table.SetPosition(&ChessPiece{X: 'f', Y: 3, PieceType: ChessPieceTypeQueen, GameSide: SideBlack, Moved: true})
+	table.SetPosition(&ChessPiece{X: 'h', Y: 8, PieceType: ChessPieceTypeKing, GameSide: SideBlack, Moved: true})
 
 	return &table
 }
