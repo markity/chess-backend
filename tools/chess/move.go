@@ -778,7 +778,7 @@ func DoMove(table *chess.ChessTable, side chess.Side, fromX rune, fromY int, toX
 					testFromPiece := testTable1.GetPosition(fromX, fromY)
 					testRookPiece := testTable1.GetPosition('h', 1)
 					testTable1.ClearPosition(fromX, fromY)
-					testTable1.ClearPosition(testFromPiece.X, testRookPiece.Y)
+					testTable1.ClearPosition(testRookPiece.X, testRookPiece.Y)
 					testFromPiece.X = 'f'
 					testFromPiece.Y = 1
 					testRookPiece.X = 'e'
@@ -894,7 +894,7 @@ func DoMove(table *chess.ChessTable, side chess.Side, fromX rune, fromY int, toX
 					}
 
 					// 移动过
-					if fromPiece.Moved || toPiece.Moved {
+					if fromPiece.Moved || rookPiece.Moved {
 						result.OK = false
 						return
 					}
@@ -904,7 +904,7 @@ func DoMove(table *chess.ChessTable, side chess.Side, fromX rune, fromY int, toX
 					testFromPiece := testTable1.GetPosition(fromX, fromY)
 					testRookPiece := testTable1.GetPosition('h', 8)
 					testTable1.ClearPosition(fromX, fromY)
-					testTable1.ClearPosition(testFromPiece.X, testRookPiece.Y)
+					testTable1.ClearPosition(testRookPiece.X, testRookPiece.Y)
 					testFromPiece.X = 'f'
 					testFromPiece.Y = 8
 					testRookPiece.X = 'e'
@@ -956,7 +956,7 @@ func DoMove(table *chess.ChessTable, side chess.Side, fromX rune, fromY int, toX
 					}
 
 					// 移动过
-					if fromPiece.Moved || toPiece.Moved {
+					if fromPiece.Moved || rookPiece.Moved {
 						result.OK = false
 						return
 					}
