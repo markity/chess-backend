@@ -2,7 +2,6 @@ package chess
 
 import (
 	"chess-backend/comm/chess"
-	"fmt"
 	"math"
 )
 
@@ -75,7 +74,7 @@ func hasChessBetweenTwoPointsInLine(table *chess.ChessTable, aX rune, aY int, bX
 
 // 这个函数要求两个点是倾斜排布的
 // 判定两个倾斜的点中间是否有棋挡住
-func hasChessBetweenTwoInclinedPoints(table *chess.ChessTable, ax, bx, ay, by int) bool {
+func hasChessBetweenTwoInclinedPoints(table *chess.ChessTable, ax, ay, bx, by int) bool {
 	var diffX int
 	var diffY int
 
@@ -91,7 +90,7 @@ func hasChessBetweenTwoInclinedPoints(table *chess.ChessTable, ax, bx, ay, by in
 		diffX = -1
 	}
 
-	for x0, y0 := ax+diffX, bx+diffX; CheckChessIndexValid(x0, y0) && x0 != bx; x0, y0 = x0+diffX, y0+diffY {
+	for x0, y0 := ax+diffX, ay+diffY; CheckChessIndexValid(x0, y0) && x0 != bx; x0, y0 = x0+diffX, y0+diffY {
 		if table.GetIndex(x0, y0) != nil {
 			return true
 		}
@@ -204,6 +203,8 @@ func checkIndexThreat(table *chess.ChessTable, side chess.Side, x int, y int) bo
 			if p.GameSide == remoteSide && (p.PieceType == chess.ChessPieceTypeBishop ||
 				p.PieceType == chess.ChessPieceTypeQueen) {
 				return true
+			} else {
+				break
 			}
 		}
 	}
@@ -219,6 +220,8 @@ func checkIndexThreat(table *chess.ChessTable, side chess.Side, x int, y int) bo
 			if p.GameSide == remoteSide && (p.PieceType == chess.ChessPieceTypeBishop ||
 				p.PieceType == chess.ChessPieceTypeQueen) {
 				return true
+			} else {
+				break
 			}
 		}
 	}
@@ -234,6 +237,8 @@ func checkIndexThreat(table *chess.ChessTable, side chess.Side, x int, y int) bo
 			if p.GameSide == remoteSide && (p.PieceType == chess.ChessPieceTypeBishop ||
 				p.PieceType == chess.ChessPieceTypeQueen) {
 				return true
+			} else {
+				break
 			}
 		}
 	}
@@ -249,6 +254,8 @@ func checkIndexThreat(table *chess.ChessTable, side chess.Side, x int, y int) bo
 			if p.GameSide == remoteSide && (p.PieceType == chess.ChessPieceTypeBishop ||
 				p.PieceType == chess.ChessPieceTypeQueen) {
 				return true
+			} else {
+				break
 			}
 		}
 	}
@@ -265,6 +272,8 @@ func checkIndexThreat(table *chess.ChessTable, side chess.Side, x int, y int) bo
 			if p.GameSide == remoteSide && (p.PieceType == chess.ChessPieceTypeRook ||
 				p.PieceType == chess.ChessPieceTypeQueen) {
 				return true
+			} else {
+				break
 			}
 		}
 	}
@@ -279,11 +288,12 @@ func checkIndexThreat(table *chess.ChessTable, side chess.Side, x int, y int) bo
 			if p.GameSide == remoteSide && (p.PieceType == chess.ChessPieceTypeRook ||
 				p.PieceType == chess.ChessPieceTypeQueen) {
 				return true
+			} else {
+				break
 			}
 		}
 	}
 	for x0, y0 := x, y+1; CheckChessIndexValid(x0, y0); y0 = y0 + 1 {
-		println(x0, y0)
 		p := table.GetIndex(x0, y0)
 		if p != nil {
 			// 被自家棋子挡住了, 这是安全的
@@ -294,6 +304,8 @@ func checkIndexThreat(table *chess.ChessTable, side chess.Side, x int, y int) bo
 			if p.GameSide == remoteSide && (p.PieceType == chess.ChessPieceTypeRook ||
 				p.PieceType == chess.ChessPieceTypeQueen) {
 				return true
+			} else {
+				break
 			}
 		}
 	}
@@ -308,6 +320,8 @@ func checkIndexThreat(table *chess.ChessTable, side chess.Side, x int, y int) bo
 			if p.GameSide == remoteSide && (p.PieceType == chess.ChessPieceTypeRook ||
 				p.PieceType == chess.ChessPieceTypeQueen) {
 				return true
+			} else {
+				break
 			}
 		}
 	}
@@ -377,13 +391,14 @@ func checkAround8Threat(table *chess.ChessTable, side chess.Side, X rune, Y int)
 
 	// 1
 	if x0, y0 := x+1, y+1; CheckChessIndexValid(x0, y0) {
+		// 模拟移动
 		X0, Y0 := chess.MustIndexToPosition(x0, y0)
 		cpTable := table.Copy()
 		king := cpTable.ClearPosition(X, Y)
 		king.X = X0
 		king.Y = Y0
 		cpTable.SetPosition(king)
-		if checkIndexThreat(cpTable, side, x0, y0) {
+		if !checkIndexThreat(cpTable, side, x0, y0) {
 			return false
 		}
 	}
@@ -404,7 +419,6 @@ func checkAround8Threat(table *chess.ChessTable, side chess.Side, X rune, Y int)
 	// 3
 	if x0, y0 := x-1, y-1; CheckChessIndexValid(x0, y0) {
 		X0, Y0 := chess.MustIndexToPosition(x0, y0)
-		fmt.Println(X0, Y0)
 		cpTable := table.Copy()
 		king := cpTable.ClearPosition(X, Y)
 		king.X = X0
@@ -663,14 +677,16 @@ func DoMove(table *chess.ChessTable, side chess.Side, fromX rune, fromY int, toX
 			return
 		}
 
-		// 将军但游戏没有结束
-		if kingThreat {
+		// 平
+		if !kingThreat && kingAroundAllThreat {
 			result.OK = true
-			result.GameOver = false
-			result.KingThreat = true
+			result.GameOver = true
+			result.GameWinner = chess.SideBoth
 			return
 		}
 
+		// 将军但游戏没有结束
+		result.KingThreat = kingThreat
 		result.OK = true
 		result.GameOver = false
 		result.KingThreat = false

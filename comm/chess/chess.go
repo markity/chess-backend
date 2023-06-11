@@ -239,6 +239,20 @@ func NewTestTable9() *ChessTable {
 	return &table
 }
 
+// 平局
+func NewTestTable10() *ChessTable {
+	var table ChessTable
+
+	table.SetPosition(&ChessPiece{X: 'e', Y: 2, PieceType: ChessPieceTypeKing, GameSide: SideWhite, Moved: true})
+	table.SetPosition(&ChessPiece{X: 'd', Y: 5, PieceType: ChessPieceTypeRook, GameSide: SideWhite, Moved: true})
+	table.SetPosition(&ChessPiece{X: 'h', Y: 5, PieceType: ChessPieceTypeQueen, GameSide: SideWhite, Moved: true})
+	table.SetPosition(&ChessPiece{X: 'a', Y: 8, PieceType: ChessPieceTypeQueen, GameSide: SideWhite, Moved: true})
+
+	table.SetPosition(&ChessPiece{X: 'e', Y: 4, PieceType: ChessPieceTypeKing, GameSide: SideBlack, Moved: true})
+
+	return &table
+}
+
 func NewChessTable() *ChessTable {
 	var table ChessTable
 	table.SetPosition(&ChessPiece{X: 'a', Y: 1, PieceType: ChessPieceTypeRook, GameSide: SideWhite, Moved: false})
