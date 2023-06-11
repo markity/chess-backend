@@ -102,13 +102,13 @@ func NewTestTable1() *ChessTable {
 
 	table.SetPosition(&ChessPiece{X: 'e', Y: 1, PieceType: ChessPieceTypeKing, GameSide: SideWhite, Moved: false})
 	table.SetPosition(&ChessPiece{X: 'e', Y: 8, PieceType: ChessPieceTypeKing, GameSide: SideBlack, Moved: false})
-	table.SetPosition(&ChessPiece{X: 'h', Y: 7, PieceType: ChessPieceTypePawn, GameSide: SideWhite, Moved: false, PawnMovedTwoLastTime: false})
-	table.SetPosition(&ChessPiece{X: 'a', Y: 7, PieceType: ChessPieceTypeQueen, GameSide: SideWhite, Moved: false, PawnMovedTwoLastTime: false})
+	table.SetPosition(&ChessPiece{X: 'h', Y: 7, PieceType: ChessPieceTypePawn, GameSide: SideWhite, Moved: true, PawnMovedTwoLastTime: false})
+	table.SetPosition(&ChessPiece{X: 'a', Y: 7, PieceType: ChessPieceTypeQueen, GameSide: SideWhite, Moved: true, PawnMovedTwoLastTime: false})
 
 	return &table
 }
 
-// 测试upgrade
+// 之前模拟的一个局面, 用它测试出了bug, 现在已经修复
 func NewTestTable2() *ChessTable {
 	var table ChessTable
 
@@ -151,17 +151,19 @@ func NewTestTable2() *ChessTable {
 	return &table
 }
 
+// 用来测试平局
 func NewTestTable3() *ChessTable {
 	var table ChessTable
 
-	table.SetPosition(&ChessPiece{X: 'e', Y: 1, PieceType: ChessPieceTypeKing, GameSide: SideWhite, Moved: false})
-	table.SetPosition(&ChessPiece{X: 'h', Y: 1, PieceType: ChessPieceTypeRook, GameSide: SideWhite, Moved: false})
+	table.SetPosition(&ChessPiece{X: 'e', Y: 7, PieceType: ChessPieceTypeKing, GameSide: SideWhite, Moved: true})
+	table.SetPosition(&ChessPiece{X: 'g', Y: 6, PieceType: ChessPieceTypeBishop, GameSide: SideWhite, Moved: true})
 
-	table.SetPosition(&ChessPiece{X: 'g', Y: 8, PieceType: ChessPieceTypeKing, GameSide: SideBlack, Moved: false})
+	table.SetPosition(&ChessPiece{X: 'h', Y: 8, PieceType: ChessPieceTypeKing, GameSide: SideBlack, Moved: true})
 
 	return &table
 }
 
+// 王车易位
 func NewTestTable4() *ChessTable {
 	var table ChessTable
 
@@ -173,6 +175,7 @@ func NewTestTable4() *ChessTable {
 	return &table
 }
 
+// 王车易位, 目的地对方有车
 func NewTestTable5() *ChessTable {
 	var table ChessTable
 
@@ -181,6 +184,31 @@ func NewTestTable5() *ChessTable {
 
 	table.SetPosition(&ChessPiece{X: 'g', Y: 8, PieceType: ChessPieceTypeKing, GameSide: SideBlack, Moved: true})
 	table.SetPosition(&ChessPiece{X: 'c', Y: 8, PieceType: ChessPieceTypeRook, GameSide: SideBlack, Moved: true})
+
+	return &table
+}
+
+// 王车易位, 中途截胡
+func NewTestTable6() *ChessTable {
+	var table ChessTable
+
+	table.SetPosition(&ChessPiece{X: 'e', Y: 1, PieceType: ChessPieceTypeKing, GameSide: SideWhite, Moved: false})
+	table.SetPosition(&ChessPiece{X: 'a', Y: 1, PieceType: ChessPieceTypeRook, GameSide: SideWhite, Moved: false})
+
+	table.SetPosition(&ChessPiece{X: 'g', Y: 8, PieceType: ChessPieceTypeKing, GameSide: SideBlack, Moved: true})
+	table.SetPosition(&ChessPiece{X: 'f', Y: 3, PieceType: ChessPieceTypeQueen, GameSide: SideBlack, Moved: true})
+
+	return &table
+}
+
+func NewTestTable7() *ChessTable {
+	var table ChessTable
+
+	table.SetPosition(&ChessPiece{X: 'e', Y: 1, PieceType: ChessPieceTypeKing, GameSide: SideWhite, Moved: false})
+	table.SetPosition(&ChessPiece{X: 'a', Y: 1, PieceType: ChessPieceTypeRook, GameSide: SideWhite, Moved: false})
+
+	table.SetPosition(&ChessPiece{X: 'g', Y: 8, PieceType: ChessPieceTypeKing, GameSide: SideBlack, Moved: true})
+	table.SetPosition(&ChessPiece{X: 'f', Y: 3, PieceType: ChessPieceTypeQueen, GameSide: SideBlack, Moved: true})
 
 	return &table
 }
@@ -256,4 +284,33 @@ func MustPositionToIndex(X rune, Y int) (int, int) {
 	y = Y - 1
 
 	return x, y
+}
+
+func MustIndexToPosition(x int, y int) (rune, int) {
+	var X rune
+	switch x {
+	case 0:
+		X = 'a'
+	case 1:
+		X = 'b'
+	case 2:
+		X = 'c'
+	case 3:
+		X = 'd'
+	case 4:
+		X = 'e'
+	case 5:
+		X = 'e'
+	case 6:
+		X = 'g'
+	case 7:
+		X = 'h'
+	default:
+		panic("unreachable")
+	}
+
+	if y < 0 || y > 7 {
+		panic("unreachable")
+	}
+	return X, y + 1
 }

@@ -2,6 +2,7 @@ package chess
 
 import (
 	"chess-backend/comm/chess"
+	"fmt"
 	"math"
 )
 
@@ -375,57 +376,106 @@ func checkAround8Threat(table *chess.ChessTable, side chess.Side, X rune, Y int)
 	x, y := chess.MustPositionToIndex(X, Y)
 
 	// 1
-	if x0, y0 := x+1, y+1; !CheckChessIndexValid(x0, y0) {
-		if checkIndexThreat(table, side, x0, y0) {
+	if x0, y0 := x+1, y+1; CheckChessIndexValid(x0, y0) {
+		X0, Y0 := chess.MustIndexToPosition(x0, y0)
+		cpTable := table.Copy()
+		king := cpTable.ClearPosition(X, Y)
+		king.X = X0
+		king.Y = Y0
+		cpTable.SetPosition(king)
+		if checkIndexThreat(cpTable, side, x0, y0) {
 			return false
 		}
 	}
 
 	// 2
-	if x0, y0 := x+1, y-1; !CheckChessIndexValid(x0, y0) {
-		if !checkIndexThreat(table, side, x0, y0) {
+	if x0, y0 := x+1, y-1; CheckChessIndexValid(x0, y0) {
+		X0, Y0 := chess.MustIndexToPosition(x0, y0)
+		cpTable := table.Copy()
+		king := cpTable.ClearPosition(X, Y)
+		king.X = X0
+		king.Y = Y0
+		cpTable.SetPosition(king)
+		if !checkIndexThreat(cpTable, side, x0, y0) {
 			return false
 		}
 	}
 
 	// 3
-	if x0, y0 := x-1, y-1; !CheckChessIndexValid(x0, y0) {
-		if !checkIndexThreat(table, side, x0, y0) {
+	if x0, y0 := x-1, y-1; CheckChessIndexValid(x0, y0) {
+		X0, Y0 := chess.MustIndexToPosition(x0, y0)
+		fmt.Println(X0, Y0)
+		cpTable := table.Copy()
+		king := cpTable.ClearPosition(X, Y)
+		king.X = X0
+		king.Y = Y0
+		cpTable.SetPosition(king)
+		if !checkIndexThreat(cpTable, side, x0, y0) {
 			return false
 		}
 	}
 
 	// 4
-	if x0, y0 := x-1, y+1; !CheckChessIndexValid(x0, y0) {
-		if !checkIndexThreat(table, side, x0, y0) {
+	if x0, y0 := x-1, y+1; CheckChessIndexValid(x0, y0) {
+		X0, Y0 := chess.MustIndexToPosition(x0, y0)
+		cpTable := table.Copy()
+		king := cpTable.ClearPosition(X, Y)
+		king.X = X0
+		king.Y = Y0
+		cpTable.SetPosition(king)
+		if !checkIndexThreat(cpTable, side, x0, y0) {
 			return false
 		}
 	}
 
 	// 5
-	if x0, y0 := x+1, y; !CheckChessIndexValid(x0, y0) {
-		if !checkIndexThreat(table, side, x0, y0) {
+	if x0, y0 := x+1, y; CheckChessIndexValid(x0, y0) {
+		X0, Y0 := chess.MustIndexToPosition(x0, y0)
+		cpTable := table.Copy()
+		king := cpTable.ClearPosition(X, Y)
+		king.X = X0
+		king.Y = Y0
+		cpTable.SetPosition(king)
+		if !checkIndexThreat(cpTable, side, x0, y0) {
 			return false
 		}
 	}
 
 	// 6
-	if x0, y0 := x-1, y; !CheckChessIndexValid(x0, y0) {
-		if !checkIndexThreat(table, side, x0, y0) {
+	if x0, y0 := x-1, y; CheckChessIndexValid(x0, y0) {
+		X0, Y0 := chess.MustIndexToPosition(x0, y0)
+		cpTable := table.Copy()
+		king := cpTable.ClearPosition(X, Y)
+		king.X = X0
+		king.Y = Y0
+		cpTable.SetPosition(king)
+		if !checkIndexThreat(cpTable, side, x0, y0) {
 			return false
 		}
 	}
 
 	// 7
-	if x0, y0 := x, y+1; !CheckChessIndexValid(x0, y0) {
-		if !checkIndexThreat(table, side, x0, y0) {
+	if x0, y0 := x, y+1; CheckChessIndexValid(x0, y0) {
+		X0, Y0 := chess.MustIndexToPosition(x0, y0)
+		cpTable := table.Copy()
+		king := cpTable.ClearPosition(X, Y)
+		king.X = X0
+		king.Y = Y0
+		cpTable.SetPosition(king)
+		if !checkIndexThreat(cpTable, side, x0, y0) {
 			return false
 		}
 	}
 
 	// 8
-	if x0, y0 := x, y-1; !CheckChessIndexValid(x0, y0) {
-		if !checkIndexThreat(table, side, x0, y0) {
+	if x0, y0 := x, y-1; CheckChessIndexValid(x0, y0) {
+		X0, Y0 := chess.MustIndexToPosition(x0, y0)
+		cpTable := table.Copy()
+		king := cpTable.ClearPosition(X, Y)
+		king.X = X0
+		king.Y = Y0
+		cpTable.SetPosition(king)
+		if !checkIndexThreat(cpTable, side, x0, y0) {
 			return false
 		}
 	}
