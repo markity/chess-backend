@@ -320,7 +320,7 @@ func (ch *ConnHandler) OnMessage(c *gev.Connection, ctx interface{}, data []byte
 			return nil
 		}
 
-		chesstool.DoUpgrade(gameContext.Table, packet.ChessPieceType)
+		result := chesstool.DoUpgrade(gameContext.Table, selfSide, remoteSide, packet.ChessPieceType)
 		notifyUpgradeOK := packets.PacketServerRemoteUpgradeOK{
 			Table: gameContext.Table,
 		}
@@ -347,6 +347,22 @@ func (ch *ConnHandler) OnMessage(c *gev.Connection, ctx interface{}, data []byte
 		}
 		notifySelfUpgradeOKBytesWithHeader := packtool.DoPackWith4BytesHeader(notifySelfUpgradeOK.MustMarshalToBytes())
 		selfContext.Conn.Send(notifySelfUpgradeOKBytesWithHeader)
+
+		if result.GameOver {
+			gameOverPacket := packets.PacketServerGameOver{
+				Table:       gameContext.Table,
+				WinnerSide:  result.WinnerSide,
+				IsSurrender: false,
+				IsDraw:      false,
+			}
+			gameOverPacketBytesWithHeader := packtool.DoPackWith4BytesHeader(gameOverPacket.MustMarshalToBytes())
+			selfContext.ConnState = ConnStateNone
+			selfContext.Gcontext = nil
+			remoteContext.ConnState = ConnStateNone
+			remoteContext.Gcontext = nil
+			remoteContext.Conn.Send(gameOverPacketBytesWithHeader)
+			selfContext.Conn.Send(gameOverPacketBytesWithHeader)
+		}
 
 		return nil
 	case *packets.PacketClientDoSurrender:

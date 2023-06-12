@@ -2,16 +2,44 @@ package chess
 
 import "chess-backend/comm/chess"
 
-func DoUpgrade(table *chess.ChessTable, targetPieceType chess.ChessPieceType) {
+type UpgradeResult struct {
+	GameOver   bool
+	WinnerSide chess.Side
+}
+
+func DoUpgrade(table *chess.ChessTable, side chess.Side, remoteSide chess.Side, targetPieceType chess.ChessPieceType) (result UpgradeResult) {
 	for _, v := range table {
 		if v != nil && v.GameSide == chess.SideWhite && v.Y == 8 && v.PieceType == chess.ChessPieceTypePawn {
 			v.PieceType = targetPieceType
-			return
 		}
 
 		if v != nil && v.GameSide == chess.SideBlack && v.Y == 1 && v.PieceType == chess.ChessPieceTypePawn {
 			v.PieceType = targetPieceType
-			return
 		}
 	}
+
+	remoteKing := findKing(table, remoteSide)
+
+	// 是否将军
+	kingThreat := checkPositionThreat(table, remoteSide, remoteKing.X, remoteKing.Y)
+
+	// 王的8个单元格是否都受威胁
+	kingAroundAllThreat := checkAround8Threat(table, remoteSide, remoteKing.X, remoteKing.Y)
+
+	// 赢
+	if kingThreat && kingAroundAllThreat {
+		result.GameOver = true
+		result.WinnerSide = side
+		return
+	}
+
+	// 判断和棋
+	if !kingThreat && kingAroundAllThreat {
+		result.GameOver = true
+		result.WinnerSide = chess.SideBoth
+		return
+	}
+
+	result.GameOver = false
+	return
 }

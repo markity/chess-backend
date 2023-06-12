@@ -688,7 +688,6 @@ func DoMove(table *chess.ChessTable, side chess.Side, fromX rune, fromY int, toX
 		result.KingThreat = kingThreat
 		result.OK = true
 		result.GameOver = false
-		result.KingThreat = false
 		return
 	}
 
@@ -950,7 +949,7 @@ func DoMove(table *chess.ChessTable, side chess.Side, fromX rune, fromY int, toX
 					}
 
 					// to为nil或不为rook
-					if toPiece == nil || toPiece.PieceType != chess.ChessPieceTypeRook {
+					if rookPiece == nil || rookPiece.PieceType != chess.ChessPieceTypeRook {
 						result.OK = false
 						return
 					}
